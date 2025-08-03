@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Bar } from 'react-chartjs-2';
 import { Doughnut } from 'react-chartjs-2';
 import {
@@ -38,6 +39,25 @@ export default function LoadingPage() {
   const weekly = getWeeklyBreakdown(Number(prediction));
 
   const bep = Number(form.Budget) * 2.5
+  const difference = Number(prediction) - bep;
+
+  let status = '';
+  let color = '';
+  let icon = '';
+
+  if (difference >= 0) {
+    status = 'Predicted to be profitable.';
+    color = 'text-green-400';
+    icon = '✅';
+  } else if (Math.abs(difference) <= 15) {
+    status = 'Near success.';
+    color = 'text-orange-400';
+    icon = '🍂';
+  } else {
+    status = 'Unlikely to be profitable.';
+    color = 'text-red-500';
+    icon = '❌';
+  }
 
   const isSuccessful = Number(prediction) >= bep;
 
@@ -189,6 +209,13 @@ const handleSubmit = async () => {
             </div>
           </div>
 
+          <motion.div
+            className="mt-6"
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          >
+
           {/* Main Content */}
           <div className="text-center max-w-4xl mx-auto animate-[fadeIn_1s_ease-out_0.5s_both]">
             <h1 className="text-2xl md:text-4xl font-bold text-white mb-5 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
@@ -246,9 +273,15 @@ const handleSubmit = async () => {
                   <p className="text-lg text-white mb-4">
                     📈 Predicted Box Office: <strong>${Number(prediction).toFixed(2)}</strong>
                   </p>
-                  <p className={`text-xl font-semibold ${isSuccessful ? 'text-green-400' : 'text-red-500'}`}>
-                    {isSuccessful ? "Profitable Prediction ✅" : "Unlikely to be reaching the Break Even ❌"}
-                  </p>
+                  <div className="text-center mt-4">
+                    <p className="text-lg text-white mb-4">
+                      🎯 Break Even Point (BEP): <strong>${bep.toFixed(2)}M</strong>
+                    </p>
+                    <p>Overall Prediction</p>
+                    <p className={`text-xl font-semibold ${color}`}>
+                      {icon} {status}
+                    </p>
+                  </div>
                   <div className= 'mb-5'>
                     <Bar
                       data={{
@@ -395,6 +428,7 @@ const handleSubmit = async () => {
               
             </div>*/}
           </div>
+          </motion.div>
         </div>
       </div>
     );

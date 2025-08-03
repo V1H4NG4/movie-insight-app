@@ -3,43 +3,11 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Sparkles } from 'lucide-react';
-import { Bar } from 'react-chartjs-2';
-import { Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
-
-ChartJS.register( ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function LoadingPage() {
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('Initializing...');
   const [showMainPage, setShowMainPage] = useState(false);
-
-  const [form, setForm] = useState({ Budget: '', Runtime: '', Rating: '' });
-  const [prediction, setPrediction] = useState(null);
-  const [error, setError] = useState(null);
-  const averageBoxOffice = 506250000;
-  const maxBoxOffice = 1152000000;
-  const minBoxOffice = 134000000;
-
-  const getWeeklyBreakdown = (total) => {
-  const percentages = [0.35, 0.25, 0.15, 0.10, 0.08, 0.07];
-    return percentages.map(p => total * p);
-  };
-
-  const weekly = getWeeklyBreakdown(Number(prediction));
-
-  const bep = Number(form.Budget) * 2.5
-
-  const isSuccessful = Number(prediction) >= bep;
 
   useEffect(() => {
     const loadingSteps = [
@@ -74,35 +42,6 @@ export default function LoadingPage() {
 
     executeStep();
   }, []);
-
-  const handleChange = (e) => {
-  setForm({ ...form, [e.target.name]: e.target.value });
-};
-
-const handleSubmit = async () => {
-  setError(null);
-  try {
-    const response = await fetch("http://localhost:8000/predict", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        Budget: parseFloat(form.Budget),
-        Runtime: parseFloat(form.Runtime),
-        Rating: parseFloat(form.Rating)
-      })
-    });
-    const data = await response.json();
-    if (response.ok) {
-      setPrediction(data.predicted_box_office);
-    } else {
-      setError("Prediction failed.");
-    }
-  } catch (err) {
-    setError("API call error.");
-  }
-};
 
   if (showMainPage) {
     return (
@@ -179,8 +118,8 @@ const handleSubmit = async () => {
           <div className="mb-16">
             <div className="relative">             
                 <Image
-                  src="/Models/sync.png"
-                  alt="Company Logo"
+                  src="/Models/TraceFormer.png"
+                  alt="TraceFormer Model"
                   width={750}
                   height={163}
                   priority
@@ -199,192 +138,6 @@ const handleSubmit = async () => {
                 Syncdicator is a powerfull model trained to forecast insights of movies produced by DC Studios. After tracking and analysing all the movies of the new era, DCEU and the other Else World movies by the studio Syndicator is capable of predicting the Box Office hunt of the movies under trademark of DC. 
               </p>
             </div>
-            <div className="mt-10 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <label>Budget :
-                  <input
-                    name="Budget"
-                    type="number"
-                    placeholder="Budget (USD)"
-                    value={form.Budget}
-                    onChange={handleChange}
-                    className="p-2 rounded bg-gray-800 text-white border border-gray-600"
-                  />
-                </label>
-                <label>Runtime :
-                  <input
-                    name="Runtime"
-                    type="number"
-                    placeholder="Runtime (min)"
-                    value={form.Runtime}
-                    onChange={handleChange}
-                    className="p-2 rounded bg-gray-800 text-white border border-gray-600"
-                />
-                </label>
-                <label>Rating : 
-                  <input
-                    name="Rating"
-                    type="number"
-                    placeholder="Rating (%)"
-                    value={form.Rating}
-                    onChange={handleChange}
-                    className="p-2 rounded bg-gray-800 text-white border border-gray-600"
-                  />
-                </label>
-              </div>
-              <button
-                onClick={handleSubmit}
-                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                View Insight
-              </button>
-
-              {error && <p className="text-red-500">{error}</p>}
-
-              {prediction && (
-                <div className="mt-6">
-                  <p className="text-lg text-white mb-4">
-                    📈 Predicted Box Office: <strong>${Number(prediction).toFixed(2)}</strong>
-                  </p>
-                  <p className={`text-xl font-semibold ${isSuccessful ? 'text-green-400' : 'text-red-500'}`}>
-                    {isSuccessful ? "Profitable Prediction ✅" : "Unlikely to be reaching the Break Even ❌"}
-                  </p>
-                  <div className= 'mb-5'>
-                    <Bar
-                      data={{
-                        labels: ['Max BO','Minimum BO','Average', 'Predicted'],
-                        datasets: [
-                          {
-                            label: 'Box Office',
-                            data: [maxBoxOffice,minBoxOffice,averageBoxOffice, (Number(prediction)*1000000)],
-                            backgroundColor: ['#ffffffff','#ffffffff','#ffffff','#c3ff00ff'],
-                            barThickness:130
-                          }
-                        ]
-                      }}
-                      options={{
-                        responsive: true,
-                        plugins: {
-                          legend: { display: false },
-                          title: { display: true, text: 'Box Office Comparison' }
-                        },
-                        scales: {
-                          y: {
-                            beginAtZero: true,
-                            ticks: {
-                              color: '#99ff99ff',  // white tick labels
-                              stepSize: 75000000,
-                              callback: function(value) {
-                                return '$' + (value / 1000000) + 'M';
-                              }
-                            },
-                            grid: {
-                              color: 'rgba(255, 255, 255, 0.4)'
-                            },
-                            suggestedMax: Math.max(1000000000, Math.max(averageBoxOffice, Number(prediction)) * 1.1)
-                          },
-                          x: {
-                            ticks: {
-                              color: '#FFFFFF'
-                            },
-                            grid: {
-                              color: 'rgba(255, 255, 255, 0.4)',
-                              stacked: false,
-                              grouped: false
-                            }
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className='mb-5'>
-                    <Bar
-                      data={{
-                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
-                        datasets: [
-                          {
-                            label: 'Weekly Revenue',
-                            data: weekly.map(v => v * 1_000_000),  // if prediction is in millions
-                            backgroundColor: [
-                              '#22c55e',  
-                              '#66db8c',
-                              '#aaffbb',
-                              '#ccf5dd',
-                              '#e6f9ee',
-                              '#ffffff'   
-                            ],
-                            barThickness:120
-                          }
-                        ]
-                      }}
-                      options={{
-                        responsive: true,
-                        plugins: {
-                          title: {
-                            display: true,
-                            text: 'Weekly Distribution of Predicted Box Office',
-                            color: '#FFFFFF'
-                          },
-                          legend: { display: false }
-                        },
-                        scales: {
-                          y: {
-                            beginAtZero: true,
-                            ticks: {
-                              color: '#FFFFFF',
-                              callback: (value) => '$' + value / 1_000_000 + 'M'
-                            },
-                            grid: { color: 'rgba(255,255,255,0.1)' }
-                          },
-                          x: {
-                            ticks: { color: '#FFFFFF' },
-                            grid: { color: 'rgba(255,255,255,0.1)' }
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className='mb-5 w-[500px] h-[500px] mx-auto'>
-                    <Doughnut
-                      data={{
-                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
-                        datasets: [
-                          {
-                            label: 'Weekly Revenue Share',
-                            data: weekly.map(v => v * 1_000_000), // in full $
-                            backgroundColor: [
-                              '#22c55e',
-                              '#66db8c',
-                              '#aaffbb',
-                              '#ccf5dd',
-                              '#e6f9ee',
-                              '#ffffff'
-                            ],
-                            borderColor: '#22c55e', // optional: dark ring separator
-                            borderWidth: 1,
-                            cutout: '70%'
-                          }
-                        ]
-                      }}
-                      options={{
-                        plugins: {
-                          title: {
-                            display: true,
-                            text: 'Weekly Revenue Distribution',
-                            color: '#FFFFFF'
-                          },
-                          legend: {
-                            labels: {
-                              color: '#FFFFFF'
-                            }
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>   
 
             {/* Call to Action 
             <div className="space-y-6">
@@ -401,7 +154,7 @@ const handleSubmit = async () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-800 to-blue-950 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-black to-blue-600 flex items-center justify-center p-4 relative overflow-hidden">
       <style jsx>{`
         @keyframes fadeIn {
           from {
@@ -459,8 +212,8 @@ const handleSubmit = async () => {
         <div className="mb-12">
           <div className="relative inline-block">
               <Image
-                src="/Models/sync.png"
-                alt="Syncdicator"
+                src="/Models/TraceFormer.png"
+                alt="TraceFormer"
                 width={1500}
                 height={625}
                 priority
