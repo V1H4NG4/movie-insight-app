@@ -19,8 +19,6 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -49,6 +47,16 @@ export default function SignUpPage() {
     }
   };
 
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIsLoading(false);
+      alert(`Sign up functionality would be implemented here with ${formData.selectedPlan} plan`);
+    }, 1500);
+  };
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -69,72 +77,6 @@ export default function SignUpPage() {
       default: return '';
     }
   };
-
-  //register add -------------------------------------------------------------------------------------------------------------
-  async function registerFilmer() {
-    setApiError('');
-    setSuccessMsg('');
-
-    // Client-side guardrails (still UI-only friendly)
-    const emailOk = /^\S+@\S+\.\S+$/.test(formData.email.trim());
-    const dobOk = /^\d{4}-\d{2}-\d{2}$/.test(formData.birthDate.trim());
-    const pwOk = formData.password && formData.password.length >= 6;
-    const match = formData.password === formData.confirmPassword;
-
-    if (!formData.firstName || !formData.lastName || !emailOk || !dobOk) {
-      setApiError('Please complete your basic info with a valid email and date.');
-      return;
-    }
-    if (!formData.selectedPlan) {
-      setApiError('Please select a plan.');
-      return;
-    }
-    if (!pwOk || !match || !formData.agreedToTerms) {
-      setApiError('Check your password (min 6 chars), confirmation, and accept the terms.');
-      return;
-    }
-
-    const payload = {
-      first_name:  formData.firstName.trim(),
-      last_name:   formData.lastName.trim(),
-      email:       formData.email.trim().toLowerCase(),
-      dateofbirth: formData.birthDate.trim(),   // YYYY-MM-DD from <input type="date">
-      password:    formData.password,
-
-      // Optional fields (keep if/when you add these inputs later)
-      // phone: formData.phone?.trim() || null,
-      // company: formData.company?.trim() || null,
-      // portfolio_url: formData.portfolio?.trim() || null,
-      // bio: formData.bio?.trim() || null,
-    };
-
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/filmer/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        // Backend returns helpful messages for duplicates: “Email is already registered”, etc.
-        setApiError(data?.message || 'Registration failed.');
-        return;
-      }
-
-      // Success UX (pick one)
-      setSuccessMsg('Registration successful! You can sign in now.');
-      // Optional redirect without hooks (avoids useRouter):
-      // setTimeout(() => { window.location.href = '/Login'; }, 800);
-    } catch (err) {
-      console.error(err);
-      setApiError('Network error. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white flex items-center justify-center p-4 relative overflow-hidden">
@@ -240,7 +182,7 @@ export default function SignUpPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2 animate-[slideInLeft_0.6s_ease-out_0.2s_both]">
                   <label htmlFor="firstName" className="block text-sm font-medium text-gray-200">
-                    First Name / Organization
+                    First Name
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -258,7 +200,7 @@ export default function SignUpPage() {
                 </div>
                 <div className="space-y-2 animate-[slideInLeft_0.6s_ease-out_0.3s_both]">
                   <label htmlFor="lastName" className="block text-sm font-medium text-gray-200">
-                    Last Name / Type
+                    Last Name
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -299,7 +241,7 @@ export default function SignUpPage() {
               {/* Birth Date Field */}
               <div className="space-y-2 animate-[slideInLeft_0.6s_ease-out_0.5s_both]">
                 <label htmlFor="birthDate" className="block text-sm font-medium text-gray-200">
-                  DOB / Date of Establishment
+                  Birth Date
                 </label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -361,7 +303,7 @@ export default function SignUpPage() {
                         <Check className="w-4 h-4 text-blue-400 ml-1" />
                       )}
                     </div>
-                    <p className="text-gray-300 text-sm mb-3">For individuals</p>
+                    <p className="text-gray-300 text-sm mb-3">For induviduals</p>
                     <div className="text-2xl font-bold text-white">
                       $9.99<span className="text-xs font-normal text-gray-400">/mo</span>
                     </div>
@@ -531,31 +473,20 @@ export default function SignUpPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={registerFilmer}
+                  onClick={handleSubmit}
                   disabled={isLoading || !isStep3Valid}
-                  className="flex-1 bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed hover:from-cyan-300 hover:via-blue-300 hover:to-white hover:text-blue-700 hover:shadow-[0_0_12px_rgba(0,191,255,0.9),0_0_24px_rgba(30,144,255,0.7),0_0_36px_rgba(0,102,204,0.5)]"
+                  className="flex-1 bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:from-cyan-300 hover:via-blue-300 hover:to-white hover:text-blue-700 hover:shadow-[0_0_12px_rgba(0,191,255,0.9),0_0_24px_rgba(30,144,255,0.7),0_0_36px_rgba(0,102,204,0.5)] animate-[slideInLeft_0.6s_ease-out_0.7s_both]"
                 >
                   {isLoading ? (
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Creating…
+                      Creating...
                     </div>
                   ) : (
                     'Create Account'
                   )}
                 </button>
               </div>
-              {/*error messaages*/}
-              {apiError && (
-                <div className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 text-red-200 text-sm p-3">
-                  {apiError}
-                </div>
-              )}
-              {successMsg && (
-                <div className="mt-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 text-sm p-3">
-                  {successMsg}
-                </div>
-              )}
             </div>
           )}
 

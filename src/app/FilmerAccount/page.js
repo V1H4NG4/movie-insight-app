@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { 
   Home, 
   TrendingUp,
@@ -64,6 +65,7 @@ export default function FilmmakerDashboard() {
         </div>
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-full blur-3xl"></div>
       </div>
+      
 
       {/* Vision & Mission Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -135,184 +137,191 @@ const renderForecastorContent = () => (
         <h2 className="text-3xl font-bold text-white mb-4">Select the Preferred Model</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        {/* SYNCDCATOR */}
-        <div className="text-center">
-         <Link href="/Syncdicator" passHref className="block w-full">
-            <button
-              onClick={() => handleModelSelect("SYNCDCATOR")}
-              className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
-                selectedModel === "SYNCDCATOR" ? 'ring-2 ring-white border-white' : ''
-              }`}
-            >
-                <div className="w-full h-full flex items-center justify-center p-3">
-                <Image 
-                  src="/Models/sync.png"
-                  alt="MARVELORE"
-                  fill
-                  className="max-w-full max-h-full object-contain"
-                />
+      <motion.div
+            className="mt-6"
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+              {/* SYNCDCATOR */}
+              <div className="text-center">
+              <Link href="/Syncdicator" passHref className="block w-full">
+                  <button
+                    onClick={() => handleModelSelect("SYNCDCATOR")}
+                    className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
+                      selectedModel === "SYNCDCATOR" ? 'ring-2 ring-white border-white' : ''
+                    }`}
+                  >
+                      <div className="w-full h-full flex items-center justify-center p-3">
+                      <Image 
+                        src="/Models/sync.png"
+                        alt="MARVELORE"
+                        fill
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                  </button>
+                </Link>
+                <div className="mt-3">
+                  <h3 className="text-lg font-semibold text-white mb-1">SYNCDCATOR</h3>
+                  <p className="text-gray-400 text-sm">Well trained for DC related movies.</p>
+                </div>
               </div>
-            </button>
-          </Link>
-          <div className="mt-3">
-            <h3 className="text-lg font-semibold text-white mb-1">SYNCDCATOR</h3>
-            <p className="text-gray-400 text-sm">Well trained for DC related movies.</p>
-          </div>
-        </div>
 
-        {/* MARVEL-LORE */}
-        <div className="text-center">
-          <Link href="/Marvellore" passHref className="block w-full">
-            <button
-              onClick={() => handleModelSelect("MARVELORE")}
-              className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
-                selectedModel === "MARVELORE" ? 'ring-2 ring-white border-white' : ''
-              }`}
-            >
-              <div className="w-full h-full flex items-center justify-center p-3">
-                <Image 
-                  src="/Models/MARVELORE.png"
-                  alt="MARVELORE"
-                  fill
-                  className="max-w-full max-h-full object-contain"
-                />
+              {/* MARVEL-LORE */}
+              <div className="text-center">
+                <Link href="/Marvellore" passHref className="block w-full">
+                  <button
+                    onClick={() => handleModelSelect("MARVELORE")}
+                    className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
+                      selectedModel === "MARVELORE" ? 'ring-2 ring-white border-white' : ''
+                    }`}
+                  >
+                    <div className="w-full h-full flex items-center justify-center p-3">
+                      <Image 
+                        src="/Models/MARVELORE.png"
+                        alt="MARVELORE"
+                        fill
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                  </button>
+                </Link>
+                <div className="mt-3">
+                  <h3 className="text-lg font-semibold text-white mb-1">MARVEL-LORE</h3>
+                  <p className="text-gray-400 text-sm">Marvel-lore is a model specialy trained for Marvel movies</p>
+                </div>
               </div>
-            </button>
-          </Link>
-          <div className="mt-3">
-            <h3 className="text-lg font-semibold text-white mb-1">MARVEL-LORE</h3>
-            <p className="text-gray-400 text-sm">Marvel-lore is a model specialy trained for Marvel movies</p>
-          </div>
-        </div>
 
-        {/* Jurassic Ark */}
-        <div className="text-center">
-          <Link href="/JurassicArk" passHref className="block w-full">
-            <button
-              onClick={() => handleModelSelect("jurassic Ark")}
-              className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
-                selectedModel === "jurassic Ark" ? 'ring-2 ring-white border-white' : ''
-              }`}
-            >
-              <div className="w-full h-full flex items-center justify-center p-3">
-                <Image 
-                  src="/Models/JurassicArk.png"
-                  alt="Jurassic Ark"
-                  fill
-                  className="max-w-full max-h-full object-contain"
-                />
+              {/* Jurassic Ark */}
+              <div className="text-center">
+                <Link href="/JurassicArk" passHref className="block w-full">
+                  <button
+                    onClick={() => handleModelSelect("jurassic Ark")}
+                    className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
+                      selectedModel === "jurassic Ark" ? 'ring-2 ring-white border-white' : ''
+                    }`}
+                  >
+                    <div className="w-full h-full flex items-center justify-center p-3">
+                      <Image 
+                        src="/Models/JurassicArk.png"
+                        alt="Jurassic Ark"
+                        fill
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                  </button>
+                </Link>
+                <div className="mt-3">
+                  <h3 className="text-lg font-semibold text-white mb-1">Jurassic Ark</h3>
+                  <p className="text-gray-400 text-sm">Jurassic Ark model is capable of predicting Jurassic Park franchise</p>
+                </div>
               </div>
-            </button>
-          </Link>
-          <div className="mt-3">
-            <h3 className="text-lg font-semibold text-white mb-1">Jurassic Ark</h3>
-            <p className="text-gray-400 text-sm">Jurassic Ark model is capable of predicting Jurassic Park franchise</p>
-          </div>
-        </div>
 
-        {/* TraceFormer */}
-        <div className="text-center">
-          <Link href="/TraceFormer" passHref className="block w-full">
-            <button
-              onClick={() => handleModelSelect("TraceFormer")}
-              className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
-                selectedModel === "TraceFormer" ? 'ring-2 ring-white border-white' : ''
-              }`}
-            >
-              <div className="w-full h-full flex items-center justify-center p-3">
-                <Image 
-                  src="/Models/TraceFormer.png"
-                  alt="TraceFormer"
-                  fill
-                  className="max-w-full max-h-full object-contain"
-                />
+              {/* TraceFormer */}
+              <div className="text-center">
+                <Link href="/TraceFormer" passHref className="block w-full">
+                  <button
+                    onClick={() => handleModelSelect("TraceFormer")}
+                    className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
+                      selectedModel === "TraceFormer" ? 'ring-2 ring-white border-white' : ''
+                    }`}
+                  >
+                    <div className="w-full h-full flex items-center justify-center p-3">
+                      <Image 
+                        src="/Models/TraceFormer.png"
+                        alt="TraceFormer"
+                        fill
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                  </button>
+                </Link>
+                <div className="mt-3">
+                  <h3 className="text-lg font-semibold text-white mb-1">TraceFormer</h3>
+                  <p className="text-gray-400 text-sm">TraceFormer is a model trained for Transformers.</p>
+                </div>
               </div>
-            </button>
-          </Link>
-          <div className="mt-3">
-            <h3 className="text-lg font-semibold text-white mb-1">TraceFormer</h3>
-            <p className="text-gray-400 text-sm">TraceFormer is a model trained for Transformers.</p>
-          </div>
-        </div>
 
-        {/* StarHack */}
-        <div className="text-center">
-          <Link href="/StarHacks" passHref className="block w-full">
-            <button
-              onClick={() => handleModelSelect("StarHack")}
-              className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
-                selectedModel === "StarHack" ? 'ring-2 ring-white border-white' : ''
-              }`}
-            >
-              <div className="w-full h-full flex items-center justify-center p-3">
-                <Image 
-                  src="/Models/starhack.png"
-                  alt="StarHack"
-                  fill
-                  className="max-w-full max-h-full object-contain"
-                />
+              {/* StarHack */}
+              <div className="text-center">
+                <Link href="/StarHacks" passHref className="block w-full">
+                  <button
+                    onClick={() => handleModelSelect("StarHack")}
+                    className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
+                      selectedModel === "StarHack" ? 'ring-2 ring-white border-white' : ''
+                    }`}
+                  >
+                    <div className="w-full h-full flex items-center justify-center p-3">
+                      <Image 
+                        src="/Models/starhack.png"
+                        alt="StarHack"
+                        fill
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                  </button>
+                </Link>
+                <div className="mt-3">
+                  <h3 className="text-lg font-semibold text-white mb-1">STAR-HACK</h3>
+                  <p className="text-gray-400 text-sm">StarHack is a model predicts about Star Wars movies.</p>
+                </div>
               </div>
-            </button>
-          </Link>
-          <div className="mt-3">
-            <h3 className="text-lg font-semibold text-white mb-1">STAR-HACK</h3>
-            <p className="text-gray-400 text-sm">StarHack is a model predicts about Star Wars movies.</p>
-          </div>
-        </div>
 
-        {/* Nemesis */}
-        <div className="text-center">
-          <Link href="/Nemesis" passHref className="block w-full">
-            <button
-              onClick={() => handleModelSelect("Nemesis")}
-              className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
-                selectedModel === "Nemesis" ? 'ring-2 ring-white border-white' : ''
-              }`}
-            >
-              <div className="w-full h-full flex items-center justify-center p-3">
-                <Image 
-                  src="/Models/nemesis.png"
-                  alt="The Nemesis"
-                  fill
-                  className="max-w-full max-h-full object-contain"
-                />
+              {/* Nemesis */}
+              <div className="text-center">
+                <Link href="/Nemesis" passHref className="block w-full">
+                  <button
+                    onClick={() => handleModelSelect("Nemesis")}
+                    className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
+                      selectedModel === "Nemesis" ? 'ring-2 ring-white border-white' : ''
+                    }`}
+                  >
+                    <div className="w-full h-full flex items-center justify-center p-3">
+                      <Image 
+                        src="/Models/nemesis.png"
+                        alt="The Nemesis"
+                        fill
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                  </button>
+                </Link>
+                <div className="mt-3">
+                  <h3 className="text-lg font-semibold text-white mb-1">Nemesis</h3>
+                  <p className="text-gray-400 text-sm">Most powefull and all purpose model</p>
+                </div>
               </div>
-            </button>
-          </Link>
-          <div className="mt-3">
-            <h3 className="text-lg font-semibold text-white mb-1">Nemesis</h3>
-            <p className="text-gray-400 text-sm">Most powefull and all purpose model</p>
-          </div>
-        </div>
 
-         {/* The Conjuror */}
-        <div className="text-center">
-          <Link href="/Conjuror" passHref className="block w-full">
-            <button
-              onClick={() => handleModelSelect("The Conjuror")}
-              className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
-                selectedModel === "The Conjuror" ? 'ring-2 ring-white border-white' : ''
-              }`}
-            >
-              <div className="w-full h-full flex items-center justify-center p-3">
-                <Image 
-                  src="/Models/conjuror.png"
-                  alt="The Nemesis"
-                  fill
-                  className="max-w-full max-h-full object-contain"
-                />
+              {/* The Conjuror */}
+              <div className="text-center">
+                <Link href="/Conjuror" passHref className="block w-full">
+                  <button
+                    onClick={() => handleModelSelect("The Conjuror")}
+                    className={`relative w-full h-24 bg-transparent border border-gray-600 rounded-xl hover:border-gray-400 transition-all duration-300 group ${
+                      selectedModel === "The Conjuror" ? 'ring-2 ring-white border-white' : ''
+                    }`}
+                  >
+                    <div className="w-full h-full flex items-center justify-center p-3">
+                      <Image 
+                        src="/Models/conjuror.png"
+                        alt="The Nemesis"
+                        fill
+                        className="max-w-full max-h-full object-contain"
+                      />
+                    </div>
+                  </button>
+                </Link>
+                <div className="mt-3">
+                  <h3 className="text-lg font-semibold text-white mb-1">The Conjuror</h3>
+                  <p className="text-gray-400 text-sm">A model highly accurate for Horror movies.</p>
+                </div>
               </div>
-            </button>
-          </Link>
-          <div className="mt-3">
-            <h3 className="text-lg font-semibold text-white mb-1">The Conjuror</h3>
-            <p className="text-gray-400 text-sm">A model highly accurate for Horror movies.</p>
-          </div>
-        </div>
 
-      </div>
+            </div>
+      </motion.div>
 
       {selectedModel && (
         <div className="bg-gray-900/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6 animate-fade-in">

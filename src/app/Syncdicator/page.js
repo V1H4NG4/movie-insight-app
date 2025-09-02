@@ -102,7 +102,7 @@ export default function LoadingPage() {
 const handleSubmit = async () => {
   setError(null);
   try {
-    const response = await fetch("http://localhost:8000/predict", {
+    const response = await fetch("http://localhost:8000/predictDC", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -126,7 +126,7 @@ const handleSubmit = async () => {
 
   if (showMainPage) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+       <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white flex items-center justify-center p-4 relative overflow-hidden">
         <style jsx>{`
           @keyframes fadeIn {
             from {
@@ -193,21 +193,29 @@ const handleSubmit = async () => {
           <div className="absolute top-60 left-1/3 w-1 h-1 bg-yellow-400 rounded-full animate-[sparkle_3s_ease-in-out_infinite_1.5s]"></div>
           <div className="absolute bottom-60 right-1/3 w-1.5 h-1.5 bg-pink-400 rounded-full animate-[sparkle_3s_ease-in-out_infinite_2.5s]"></div>
         </div>
+        
 
         <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
-          {/* Logo Section */}
-          <div className="mb-16">
-            <div className="relative">             
-                <Image
-                  src="/Models/sync.png"
-                  alt="Company Logo"
-                  width={750}
-                  height={163}
-                  priority
-                  className="object-contain"
-                />
+          <motion.div
+            className="mt-6"
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          >
+            {/* Logo Section */}
+            <div className="mb-16">
+              <div className="relative">             
+                  <Image
+                    src="/Models/sync.png"
+                    alt="Company Logo"
+                    width={750}
+                    height={163}
+                    priority
+                    className="object-contain"
+                  />
+              </div>
             </div>
-          </div>
+          </motion.div>
 
           <motion.div
             className="mt-6"
@@ -218,7 +226,7 @@ const handleSubmit = async () => {
 
           {/* Main Content */}
           <div className="text-center max-w-4xl mx-auto animate-[fadeIn_1s_ease-out_0.5s_both]">
-            <h1 className="text-2xl md:text-4xl font-bold text-white mb-5 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <h1 className="text-2xl md:text-4xl font-bold text-blue-400 mb-5 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
               About Syncdicator Model
             </h1>
             <div className="mb-12">
@@ -226,8 +234,8 @@ const handleSubmit = async () => {
                 Syncdicator is a powerfull model trained to forecast insights of movies produced by DC Studios. After tracking and analysing all the movies of the new era, DCEU and the other Else World movies by the studio Syndicator is capable of predicting the Box Office hunt of the movies under trademark of DC. 
               </p>
             </div>
-            <div className="mt-10 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white/3 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-white/10">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <label>Budget :
                   <input
                     name="Budget"
@@ -261,156 +269,338 @@ const handleSubmit = async () => {
               </div>
               <button
                 onClick={handleSubmit}
-                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 text-white font-semibold py-3 px-15 rounded-lg transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:from-cyan-300 hover:via-blue-300 hover:to-white hover:text-blue-700 hover:shadow-[0_0_12px_rgba(0,191,255,0.9),0_0_24px_rgba(30,144,255,0.7),0_0_36px_rgba(0,102,204,0.5)] animate-[slideInLeft_0.6s_ease-out_0.5s_both]"
               >
                 View Insight
               </button>
 
               {error && <p className="text-red-500">{error}</p>}
 
+
               {prediction && (
-                <div className="mt-6">
-                  <p className="text-lg text-white mb-4">
-                    📈 Predicted Box Office: <strong>${Number(prediction).toFixed(2)}</strong>
-                  </p>
-                  <div className="text-center mt-4">
-                    <p className="text-lg text-white mb-4">
-                      🎯 Break Even Point (BEP): <strong>${bep.toFixed(2)}M</strong>
-                    </p>
-                    <p>Overall Prediction</p>
-                    <p className={`text-xl font-semibold ${color}`}>
+                <div className="w-full mt-6">
+                  <div className="text-center mb-8">
+
+                    {/* separater */}
+                    <div className="col-span-full mt-8">
+                      <hr className="border-gray-400 mb-4" />
+                      <h2 className="text-2xl font-semibold text-blue-400 mb-6">Box Office Report</h2>
+                    </div>
+
+                    <div className="text-4xl font-bold text-purple-400 mb-2">
+                      ${Number(prediction).toFixed(1)}M
+                    </div>
+                    <p className="text-gray-300">Estimated Global Box Office</p>
+                  </div>
+
+                  <div className="text-center mb-8">
+                    <p className={`text-xl font-semibold ${color} mb-2`}>
                       {icon} {status}
                     </p>
+                    <p className="text-gray-300">
+                      🎯 Break Even Point: ${bep.toFixed(1)}M | 
+                      Difference: {difference >= 0 ? '+' : ''}${difference.toFixed(1)}M
+                    </p>
                   </div>
-                  <div className= 'mb-5'>
+
+                  {/* Market Comparison & Movie Summary */}
+                  <div className="grid md:grid-cols-2 gap-8 mb-18">
+                    <div className="bg-gray-800/30 rounded-xl p-6">
+                      <h3 className="text-lg font-semibold text-white mb-4 text-center">Market Comparison</h3>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">Predicted Box Office</span>
+                          <span className="text-purple-400 font-semibold">${Number(prediction).toFixed(1)}M</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">DC Average</span>
+                          <span className="text-white font-semibold">${(averageBoxOffice / 1000000).toFixed(1)}M</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">DC Maximum</span>
+                          <span className="text-white font-semibold">${(maxBoxOffice / 1000000).toFixed(1)}M</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">Break Even Point</span>
+                          <span className="text-yellow-400 font-semibold">${bep.toFixed(1)}M</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-800/30 rounded-xl p-6">
+                      <h3 className="text-lg font-semibold text-white mb-4 text-center">Movie Summary</h3>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Budget:</span>
+                          <span className="text-white">${form.Budget}M</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Runtime:</span>
+                          <span className="text-white">{form.Runtime} minutes</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Rating:</span>
+                          <span className="text-white">{form.Rating}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Profit Margin:</span>
+                          <span className={`${difference >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {((difference / Number(form.Budget)) * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">ROF Scale:</span>
+                          <span className="text-white">{(Number(prediction) / Number(form.Budget)).toFixed(1)}x</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className= "h-96 mb-18">
+                    <div className="col-span-full mt-8">
+                      <hr className="border-gray-400 mb-4" />
+                    </div>
                     <Bar
                       data={{
-                        labels: ['Max BO','Minimum BO','Average', 'Predicted'],
+                        labels: ['Max BO', 'Minimum BO', 'Average', 'Predicted'],
                         datasets: [
                           {
                             label: 'Box Office',
-                            data: [maxBoxOffice,minBoxOffice,averageBoxOffice, (Number(prediction)*1000000)],
-                            backgroundColor: ['#ffffffff','#ffffffff','#ffffff','#c3ff00ff'],
-                            barThickness:130
+                            data: [maxBoxOffice, minBoxOffice, averageBoxOffice, (Number(prediction) * 1000000)],
+                            backgroundColor: [
+                              'rgba(59, 130, 246, 0.8)',   // Blue-500
+                              'rgba(59, 130, 246, 0.6)',   // Blue-500 lighter
+                              'rgba(59, 130, 246, 0.4)',   // Blue-500 lightest
+                              'rgba(96, 165, 250, 1)'       //Predicted BO
+                            ],
+                            borderColor: [
+                              'rgba(59, 130, 246, 1)',
+                              'rgba(59, 130, 246, 0.8)',
+                              'rgba(59, 130, 246, 0.6)',
+                              'rgba(96, 165, 250, 1)'
+                            ],
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            borderSkipped: false,
+                            barThickness: 80,
+                            hoverBackgroundColor: [
+                              'rgba(59, 130, 246, 1)',
+                              'rgba(59, 130, 246, 0.9)',
+                              'rgba(59, 130, 246, 0.7)',
+                              'rgba(96, 165, 250, 1)'
+                            ],
+                            hoverBorderColor: 'rgba(255, 255, 255, 0.8)',
+                            hoverBorderWidth: 3
                           }
                         ]
                       }}
                       options={{
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: {
-                          legend: { display: false },
-                          title: { display: true, text: 'Box Office Comparison' }
+                          legend: { 
+                            display: false 
+                          },
+                          title: { 
+                            display: true, 
+                            text: 'Box Office Comparison (Domestic + Global)',
+                            color: '#FFFFFF',
+                            font: {
+                              size: 18,
+                              weight: 'bold'
+                            },
+                            padding: 20
+                          },
+                          tooltip: {
+                            backgroundColor: 'rgba(59, 130, 246, 0.95)',
+                            titleColor: '#FFFFFF',
+                            bodyColor: '#FFFFFF',
+                            borderColor: 'rgba(96, 165, 250, 1)',
+                            borderWidth: 2,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                              label: function(context) {
+                                return '$' + (context.parsed.y / 1000000).toFixed(1) + 'M';
+                              }
+                            }
+                          }
                         },
                         scales: {
                           y: {
                             beginAtZero: true,
                             ticks: {
-                              color: '#99ff99ff',  // white tick labels
+                              color: '#E5E7EB',
+                              font: {
+                                size: 12,
+                                weight: '500'
+                              },
                               stepSize: 75000000,
                               callback: function(value) {
                                 return '$' + (value / 1000000) + 'M';
                               }
                             },
                             grid: {
-                              color: 'rgba(255, 255, 255, 0.4)'
+                              color: 'rgba(59, 130, 246, 0.2)',
+                              lineWidth: 1,
+                              drawBorder: false
+                            },
+                            border: {
+                              display: false
                             },
                             suggestedMax: Math.max(1000000000, Math.max(averageBoxOffice, Number(prediction)) * 1.1)
                           },
                           x: {
                             ticks: {
-                              color: '#FFFFFF'
+                              color: '#FFFFFF',
+                              font: {
+                                size: 12,
+                                weight: '600'
+                              }
                             },
                             grid: {
-                              color: 'rgba(255, 255, 255, 0.4)',
-                              stacked: false,
-                              grouped: false
+                              display: false
+                            },
+                            border: {
+                              color: 'rgba(147, 51, 234, 0.3)',
+                              width: 2
                             }
                           }
+                        },
+                        interaction: {
+                          intersect: false,
+                          mode: 'index'
+                        },
+                        animation: {
+                          duration: 1500,
+                          easing: 'easeOutQuart'
                         }
                       }}
                     />
                   </div>
-                  <div className='mb-5'>
+
+                  
+                  <div className="h-98 mb-16">
+                    <div className="col-span-full mt-8">
+                      <hr className="border-gray-400 mb-4" />
+                    </div>
                     <Bar
                       data={{
                         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
                         datasets: [
                           {
                             label: 'Weekly Revenue',
-                            data: weekly.map(v => v * 1_000_000),  // if prediction is in millions
+                            data: weekly.map(v => v * 1_000_000),
                             backgroundColor: [
-                              '#22c55e',  
-                              '#66db8c',
-                              '#aaffbb',
-                              '#ccf5dd',
-                              '#e6f9ee',
-                              '#ffffff'   
+                              'rgba(147, 197, 253, 1)',    // Lightest blue - week1
+                              'rgba(96, 165, 250, 0.9)',   // Light blue - week2
+                              'rgba(59, 130, 246, 0.7)',   // Medium blue - week3
+                              'rgba(37, 99, 235, 0.5)',    // Deep blue - week4
+                              'rgba(30, 64, 175, 0.3)',    // Deeper blue - week5
+                              'rgba(23, 37, 84, 0.1)'      // Darkest blue -week6
                             ],
-                            barThickness:120
+                            borderColor: [
+                              'rgba(96, 165, 250, 1)',
+                              'rgba(59, 130, 246, 1)',
+                              'rgba(59, 130, 246, 1)',
+                              'rgba(59, 130, 246, 1)',
+                              'rgba(59, 130, 246, 1)',
+                              'rgba(59, 130, 246, 1)'
+                            ],
+                            borderWidth: 2,
+                            borderRadius: 10,
+                            borderSkipped: false,
+                            barThickness: 70,
+                            hoverBackgroundColor: [
+                              'rgba(96, 165, 250, 1)',     // Week 1 - brightest on hover
+                              'rgba(59, 130, 246, 1)',     // Week 2 - full opacity on hover
+                              'rgba(59, 130, 246, 0.9)',   // Week 3 
+                              'rgba(59, 130, 246, 0.7)',   // Week 4
+                              'rgba(59, 130, 246, 0.5)',   // Week 5
+                              'rgba(59, 130, 246, 0.3)'    // Week 6
+                            ],
+                            hoverBorderColor: 'rgba(255, 255, 255, 0.9)',
+                            hoverBorderWidth: 3
                           }
                         ]
                       }}
                       options={{
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: {
                           title: {
                             display: true,
-                            text: 'Weekly Distribution of Predicted Box Office',
-                            color: '#FFFFFF'
+                            text: 'Weekly Box Office Distribution (Domestic + Global)',
+                            color: '#FFFFFF',
+                            font: {
+                              size: 18,
+                              weight: 'bold'
+                            },
+                            padding: 20
                           },
-                          legend: { display: false }
+                          legend: { 
+                            display: false 
+                          },
+                          tooltip: {
+                            backgroundColor: 'rgba(59, 130, 246, 0.95)',
+                            titleColor: '#FFFFFF',
+                            bodyColor: '#FFFFFF',
+                            borderColor: 'rgba(96, 165, 250, 1)',
+                            borderWidth: 2,
+                            cornerRadius: 8,
+                            displayColors: false,
+                            callbacks: {
+                              label: function(context) {
+                                return '$' + (context.parsed.y / 1_000_000).toFixed(1) + 'M';
+                              }
+                            }
+                          }
                         },
                         scales: {
                           y: {
                             beginAtZero: true,
                             ticks: {
-                              color: '#FFFFFF',
-                              callback: (value) => '$' + value / 1_000_000 + 'M'
+                              color: '#E5E7EB',
+                              font: {
+                                size: 12,
+                                weight: '500'
+                              },
+                              callback: (value) => '$' + (value / 1_000_000).toFixed(0) + 'M'
                             },
-                            grid: { color: 'rgba(255,255,255,0.1)' }
+                            grid: { 
+                              color: 'rgba(147, 51, 234, 0.2)',
+                              lineWidth: 1,
+                              drawBorder: false
+                            },
+                            border: {
+                              display: false
+                            }
                           },
                           x: {
-                            ticks: { color: '#FFFFFF' },
-                            grid: { color: 'rgba(255,255,255,0.1)' }
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className='mb-5 w-[500px] h-[500px] mx-auto'>
-                    <Doughnut
-                      data={{
-                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
-                        datasets: [
-                          {
-                            label: 'Weekly Revenue Share',
-                            data: weekly.map(v => v * 1_000_000), // in full $
-                            backgroundColor: [
-                              '#22c55e',
-                              '#66db8c',
-                              '#aaffbb',
-                              '#ccf5dd',
-                              '#e6f9ee',
-                              '#ffffff'
-                            ],
-                            borderColor: '#22c55e', // optional: dark ring separator
-                            borderWidth: 1,
-                            cutout: '70%'
-                          }
-                        ]
-                      }}
-                      options={{
-                        plugins: {
-                          title: {
-                            display: true,
-                            text: 'Weekly Revenue Distribution',
-                            color: '#FFFFFF'
-                          },
-                          legend: {
-                            labels: {
-                              color: '#FFFFFF'
+                            ticks: { 
+                              color: '#FFFFFF',
+                              font: {
+                                size: 12,
+                                weight: '600'
+                              }
+                            },
+                            grid: { 
+                              display: false
+                            },
+                            border: {
+                              color: 'rgba(147, 51, 234, 0.3)',
+                              width: 2
                             }
                           }
+                        },
+                        interaction: {
+                          intersect: false,
+                          mode: 'index'
+                        },
+                        animation: {
+                          duration: 1800,
+                          easing: 'easeOutQuart',
+                          delay: (context) => context.dataIndex * 100
                         }
                       }}
                     />

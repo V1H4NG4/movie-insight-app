@@ -1,515 +1,161 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { Sparkles } from 'lucide-react';
-import { Bar } from 'react-chartjs-2';
-import { Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  ArcElement,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-} from 'chart.js';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Film, Search } from 'lucide-react';
 
-ChartJS.register( ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+// Map keys -> nice labels (optional chips)
+const TYPE_LABELS = {
+  '2D': '2D only',
+  '3D': '3D',
+  'IMAX': 'IMAX',
+  'DOLBY_ATMOS': 'Dolby Atmos',
+  'DOLBY_DIGITAL': 'Dolby Digital',
+  '4DX': '4DX',
+};
 
-export default function LoadingPage() {
-  const [progress, setProgress] = useState(0);
-  const [loadingText, setLoadingText] = useState('Initializing...');
-  const [showMainPage, setShowMainPage] = useState(false);
+export default function TestMoviesPage() {
+  const [items, setItems] = useState([]);
+  const [q, setQ] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
 
-  const [form, setForm] = useState({ Budget: '', Runtime: '', Rating: '' });
-  const [prediction, setPrediction] = useState(null);
-  const [error, setError] = useState(null);
-  const averageBoxOffice = 506250000;
-  const maxBoxOffice = 1152000000;
-  const minBoxOffice = 134000000;
-
-  const getWeeklyBreakdown = (total) => {
-  const percentages = [0.35, 0.25, 0.15, 0.10, 0.08, 0.07];
-    return percentages.map(p => total * p);
-  };
-
-  const weekly = getWeeklyBreakdown(Number(prediction));
-
-  const bep = Number(form.Budget) * 2.5
-
-  const isSuccessful = Number(prediction) >= bep;
+  const load = useCallback(async () => {
+    setLoading(true);
+    setErr('');
+    try {
+      const qs = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : '';
+      const res = await fetch(`/api/movies/list${qs}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      setItems(Array.isArray(data.items) ? data.items : []);
+    } catch (e) {
+      setErr(e.message || 'Failed to load');
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [q]);
 
   useEffect(() => {
-    const loadingSteps = [
-      { progress: 15, text: 'Loading assets...', delay: 800 },
-      { progress: 35, text: 'Connecting to servers...', delay: 1200 },
-      { progress: 75, text: 'Optimizing...', delay: 1000 },
-      { progress: 90, text: 'Almost ready...', delay: 600 },
-      { progress: 100, text: 'Welcome!', delay: 500 }
-    ];
-
-    let stepIndex = 0;
-    
-    const executeStep = () => {
-      if (stepIndex < loadingSteps.length) {
-        const step = loadingSteps[stepIndex];
-        
-        setTimeout(() => {
-          setProgress(step.progress);
-          setLoadingText(step.text);
-          
-          if (step.progress === 100) {
-            setTimeout(() => {
-              setShowMainPage(true);
-            }, 800);
-          } else {
-            stepIndex++;
-            executeStep();
-          }
-        }, step.delay);
-      }
-    };
-
-    executeStep();
-  }, []);
-
-  const handleChange = (e) => {
-  setForm({ ...form, [e.target.name]: e.target.value });
-};
-
-const handleSubmit = async () => {
-  setError(null);
-  try {
-    const response = await fetch("http://localhost:8000/predict", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        Budget: parseFloat(form.Budget),
-        Runtime: parseFloat(form.Runtime),
-        Rating: parseFloat(form.Rating)
-      })
-    });
-    const data = await response.json();
-    if (response.ok) {
-      setPrediction(data.predicted_box_office);
-    } else {
-      setError("Prediction failed.");
-    }
-  } catch (err) {
-    setError("API call error.");
-  }
-};
-
-  if (showMainPage) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
-        <style jsx>{`
-          @keyframes fadeIn {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          
-          @keyframes float {
-            0%, 100% {
-              transform: translateY(0px);
-            }
-            50% {
-              transform: translateY(-10px);
-            }
-          }
-
-          @keyframes sparkle {
-            0%, 100% {
-              opacity: 0;
-              transform: scale(0);
-            }
-            50% {
-              opacity: 1;
-              transform: scale(1);
-            }
-          }
-
-          @keyframes rotateHue {
-            0% {
-              filter: hue-rotate(0deg);
-            }
-            100% {
-              filter: hue-rotate(360deg);
-            }
-          }
-
-          @keyframes pulse {
-            0%, 100% {
-              transform: scale(1);
-            }
-            50% {
-              transform: scale(1.05);
-            }
-          }
-        `}</style>
-        
-        {/* Enhanced background decorative elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Main background blobs */}
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-[pulse_4s_ease-in-out_infinite]"></div>
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-[pulse_4s_ease-in-out_infinite_1s]"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-purple-600 to-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-[rotateHue_20s_linear_infinite]"></div>
-          
-          {/* Floating sparkles */}
-          <div className="absolute top-20 left-20 w-2 h-2 bg-white rounded-full animate-[sparkle_3s_ease-in-out_infinite]"></div>
-          <div className="absolute top-40 right-32 w-1 h-1 bg-purple-400 rounded-full animate-[sparkle_3s_ease-in-out_infinite_1s]"></div>
-          <div className="absolute bottom-32 left-40 w-1.5 h-1.5 bg-blue-400 rounded-full animate-[sparkle_3s_ease-in-out_infinite_2s]"></div>
-          <div className="absolute bottom-20 right-20 w-1 h-1 bg-white rounded-full animate-[sparkle_3s_ease-in-out_infinite_0.5s]"></div>
-          <div className="absolute top-60 left-1/3 w-1 h-1 bg-yellow-400 rounded-full animate-[sparkle_3s_ease-in-out_infinite_1.5s]"></div>
-          <div className="absolute bottom-60 right-1/3 w-1.5 h-1.5 bg-pink-400 rounded-full animate-[sparkle_3s_ease-in-out_infinite_2.5s]"></div>
-        </div>
-
-        <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
-          {/* Logo Section */}
-          <div className="mb-16">
-            <div className="relative">             
-                <Image
-                  src="/Models/sync.png"
-                  alt="Company Logo"
-                  width={750}
-                  height={163}
-                  priority
-                  className="object-contain"
-                />
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="text-center max-w-4xl mx-auto animate-[fadeIn_1s_ease-out_0.5s_both]">
-            <h1 className="text-2xl md:text-4xl font-bold text-white mb-5 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
-              About Syncdicator Model
-            </h1>
-            <div className="mb-12">
-              <p className="text-xl text-gray-300 mb-6 leading-relaxed">
-                Syncdicator is a powerfull model trained to forecast insights of movies produced by DC Studios. After tracking and analysing all the movies of the new era, DCEU and the other Else World movies by the studio Syndicator is capable of predicting the Box Office hunt of the movies under trademark of DC. 
-              </p>
-            </div>
-            <div className="mt-10 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <label>Budget :
-                  <input
-                    name="Budget"
-                    type="number"
-                    placeholder="Budget (USD)"
-                    value={form.Budget}
-                    onChange={handleChange}
-                    className="p-2 rounded bg-gray-800 text-white border border-gray-600"
-                  />
-                </label>
-                <label>Runtime :
-                  <input
-                    name="Runtime"
-                    type="number"
-                    placeholder="Runtime (min)"
-                    value={form.Runtime}
-                    onChange={handleChange}
-                    className="p-2 rounded bg-gray-800 text-white border border-gray-600"
-                />
-                </label>
-                <label>Rating : 
-                  <input
-                    name="Rating"
-                    type="number"
-                    placeholder="Rating (%)"
-                    value={form.Rating}
-                    onChange={handleChange}
-                    className="p-2 rounded bg-gray-800 text-white border border-gray-600"
-                  />
-                </label>
-              </div>
-              <button
-                onClick={handleSubmit}
-                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                View Insight
-              </button>
-
-              {error && <p className="text-red-500">{error}</p>}
-
-              {prediction && (
-                <div className="mt-6">
-                  <p className="text-lg text-white mb-4">
-                    📈 Predicted Box Office: <strong>${Number(prediction).toFixed(2)}</strong>
-                  </p>
-                  <p className={`text-xl font-semibold ${isSuccessful ? 'text-green-400' : 'text-red-500'}`}>
-                    {isSuccessful ? "Profitable Prediction ✅" : "Unlikely to be reaching the Break Even ❌"}
-                  </p>
-                  <div className= 'mb-5'>
-                    <Bar
-                      data={{
-                        labels: ['Max BO','Minimum BO','Average', 'Predicted'],
-                        datasets: [
-                          {
-                            label: 'Box Office',
-                            data: [maxBoxOffice,minBoxOffice,averageBoxOffice, (Number(prediction)*1000000)],
-                            backgroundColor: ['#ffffffff','#ffffffff','#ffffff','#c3ff00ff'],
-                            barThickness:130
-                          }
-                        ]
-                      }}
-                      options={{
-                        responsive: true,
-                        plugins: {
-                          legend: { display: false },
-                          title: { display: true, text: 'Box Office Comparison' }
-                        },
-                        scales: {
-                          y: {
-                            beginAtZero: true,
-                            ticks: {
-                              color: '#99ff99ff',  // white tick labels
-                              stepSize: 75000000,
-                              callback: function(value) {
-                                return '$' + (value / 1000000) + 'M';
-                              }
-                            },
-                            grid: {
-                              color: 'rgba(255, 255, 255, 0.4)'
-                            },
-                            suggestedMax: Math.max(1000000000, Math.max(averageBoxOffice, Number(prediction)) * 1.1)
-                          },
-                          x: {
-                            ticks: {
-                              color: '#FFFFFF'
-                            },
-                            grid: {
-                              color: 'rgba(255, 255, 255, 0.4)',
-                              stacked: false,
-                              grouped: false
-                            }
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className='mb-5'>
-                    <Bar
-                      data={{
-                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
-                        datasets: [
-                          {
-                            label: 'Weekly Revenue',
-                            data: weekly.map(v => v * 1_000_000),  // if prediction is in millions
-                            backgroundColor: [
-                              '#22c55e',  
-                              '#66db8c',
-                              '#aaffbb',
-                              '#ccf5dd',
-                              '#e6f9ee',
-                              '#ffffff'   
-                            ],
-                            barThickness:120
-                          }
-                        ]
-                      }}
-                      options={{
-                        responsive: true,
-                        plugins: {
-                          title: {
-                            display: true,
-                            text: 'Weekly Distribution of Predicted Box Office',
-                            color: '#FFFFFF'
-                          },
-                          legend: { display: false }
-                        },
-                        scales: {
-                          y: {
-                            beginAtZero: true,
-                            ticks: {
-                              color: '#FFFFFF',
-                              callback: (value) => '$' + value / 1_000_000 + 'M'
-                            },
-                            grid: { color: 'rgba(255,255,255,0.1)' }
-                          },
-                          x: {
-                            ticks: { color: '#FFFFFF' },
-                            grid: { color: 'rgba(255,255,255,0.1)' }
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className='mb-5 w-[500px] h-[500px] mx-auto'>
-                    <Doughnut
-                      data={{
-                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
-                        datasets: [
-                          {
-                            label: 'Weekly Revenue Share',
-                            data: weekly.map(v => v * 1_000_000), // in full $
-                            backgroundColor: [
-                              '#22c55e',
-                              '#66db8c',
-                              '#aaffbb',
-                              '#ccf5dd',
-                              '#e6f9ee',
-                              '#ffffff'
-                            ],
-                            borderColor: '#22c55e', // optional: dark ring separator
-                            borderWidth: 1,
-                            cutout: '70%'
-                          }
-                        ]
-                      }}
-                      options={{
-                        plugins: {
-                          title: {
-                            display: true,
-                            text: 'Weekly Revenue Distribution',
-                            color: '#FFFFFF'
-                          },
-                          legend: {
-                            labels: {
-                              color: '#FFFFFF'
-                            }
-                          }
-                        }
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>   
-
-            {/* Call to Action 
-            <div className="space-y-6">
-              <button className="group relative bg-gradient-to-r from-purple-600 to-blue-600 text-white px-12 py-4 rounded-full text-lg font-semibold transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(147,51,234,0.6)] focus:outline-none focus:ring-4 focus:ring-purple-500/50">
-                <span className="relative z-10">Get Started</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-blue-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </button>
-              
-            </div>*/}
-          </div>
-        </div>
-      </div>
-    );
-  }
+    load();
+  }, [load]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-800 to-blue-950 flex items-center justify-center p-4 relative overflow-hidden">
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes float {
-          0%, 100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-        }
+    <div className="min-h-screen bg-gradient-to-br from-blue-950 via-indigo-950 to-slate-900 text-slate-100">
+      {/* Header */}
+      <div className="sticky top-0 z-10 backdrop-blur bg-slate-900/40 border-b border-slate-800">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-3">
+          <Film size={18} className="text-slate-300" />
+          <h1 className="text-lg font-semibold">Movies (Test)</h1>
+          <span className="text-xs text-slate-500">Posters + captions</span>
 
-        @keyframes pulse {
-          0%, 100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.05);
-          }
-        }
-
-        @keyframes progressFill {
-          from {
-            width: 0%;
-          }
-        }
-
-        @keyframes shimmer {
-          0% {
-            background-position: -200px 0;
-          }
-          100% {
-            background-position: calc(200px + 100%) 0;
-          }
-        }
-      `}</style>
-      
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-[pulse_4s_ease-in-out_infinite]"></div>
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-[pulse_4s_ease-in-out_infinite_1s]"></div>
+          <div className="ml-auto flex items-center gap-2">
+            <div className="relative">
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && load()}
+                placeholder="Search title…"
+                className="w-64 bg-slate-950/60 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600/40"
+              />
+              <Search className="absolute left-3 top-2.5 text-slate-500" size={16} />
+            </div>
+            <button
+              onClick={load}
+              className="px-3 py-2 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800/60 text-sm"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="relative z-10 text-center max-w-lg mx-auto">
-        {/* Loading Image */}
-        <div className="mb-12">
-          <div className="relative inline-block">
-              <Image
-                src="/Models/sync.png"
-                alt="Syncdicator"
-                width={1500}
-                height={625}
-                priority
-                className="object-contain rounded-2xl"
-              />
-            
-          </div>
-        </div>
+      {/* Debug mini status */}
+      <div className="max-w-7xl mx-auto px-6 pt-4 text-xs text-slate-400">
+        status: {loading ? 'loading' : 'idle'} · count: {items.length}
+        {items[0] ? ` · first: ${items[0].title}` : ''}
+        {err ? ` · error: ${err}` : ''}
+      </div>
 
-        {/* Progress Bar Container*/}
-        <div className="mb-8 animate-[fadeIn_1s_ease-out_0.3s_both]">
-          <div className="relative">
-            {/* Progress Bar Background */}
-            <div className="w-full h-4 bg-gray-800/50 rounded-full border border-white/10 overflow-hidden">
-              {/* Progress Bar Fill */}
-              <div 
-                className="h-full bg-white rounded-full transition-all duration-300 ease-out relative"
-                style={{ width: `${progress}%` }}
-              >
-                {/* Shimmer effect */}
-                <div 
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shimmer_2s_infinite]"
-                  style={{
-                    backgroundSize: '200px 100%',
-                    backgroundRepeat: 'no-repeat'
-                  }}
-                ></div>
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Loading skeleton */}
+        {loading && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/50">
+                <div className="aspect-[2/3] bg-slate-800/40 animate-pulse" />
+                <div className="p-4 space-y-2">
+                  <div className="h-4 w-3/4 bg-slate-800/60 rounded animate-pulse" />
+                  <div className="h-3 w-1/2 bg-slate-800/60 rounded animate-pulse" />
+                </div>
               </div>
-            </div>
-            
-            {/* Progress Percentage */}
-            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
-              <span className="text-white text-sm font-medium bg-black/50 px-3 py-1 rounded-full border border-white/20">
-                {progress}%
-              </span>
-            </div>
+            ))}
           </div>
-        </div>
+        )}
 
-        {/* Loading Text */}
-        <div className="mb-6 animate-[fadeIn_1s_ease-out_0.5s_both]">
-          <p className="text-white text-lg font-medium mb-2">{loadingText}</p>
-        </div>
+        {/* Error */}
+        {!loading && err && (
+          <div className="p-6 text-center text-rose-300 bg-rose-900/10 border border-rose-700/30 rounded-xl">
+            {err}
+          </div>
+        )}
 
-        {/* Loading Stats */}
-        <div className="text-gray-400 text-sm space-y-1 animate-[fadeIn_1s_ease-out_0.7s_both]">
-          <p>Loading contents...</p>
-          <p className="text-xs opacity-70">This may take a moments</p>
-        </div>
+        {/* Empty */}
+        {!loading && !err && items.length === 0 && (
+          <div className="p-10 text-center text-slate-400">
+            No movies found. Try uploading one first.
+          </div>
+        )}
+
+        {/* Grid */}
+        {!loading && !err && items.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-5">
+            {items.map((m) => (
+              <MovieCard key={m.id} movie={m} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MovieCard({ movie }) {
+  const { title, poster_path, release_date, release_types } = movie || {};
+  const prettyDate = release_date ? new Date(release_date).toLocaleDateString() : '—';
+  const types = Array.isArray(release_types) ? release_types : [];
+
+  return (
+    <div className="rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/50 hover:bg-slate-900/70 transition">
+      {/* Poster */}
+      <div className="aspect-[2/3] bg-slate-950/40 border-b border-slate-800 flex items-center justify-center overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={poster_path || '/placeholder.svg'}
+          alt={title || 'Poster'}
+          className="w-full h-full object-cover"
+          loading="lazy"
+        />
+      </div>
+
+      {/* Caption */}
+      <div className="p-4">
+        <div className="text-slate-100 font-medium leading-snug line-clamp-2">{title || 'Untitled'}</div>
+        <div className="text-xs text-slate-400 mt-1">{prettyDate}</div>
+
+        {types.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {types.map((t) => (
+              <span
+                key={t}
+                className="text-[11px] px-2 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300"
+              >
+                {TYPE_LABELS[t] || t}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -34,7 +34,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white flex items-center justify-center p-4 relative overflow-hidden">
       <style jsx>{`
         @keyframes slideInRight {
           from {
@@ -165,7 +165,7 @@ export default function LoginPage() {
               </div>
               <a
                 href="#"
-                className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
               >
                 Forgot password?
               </a>
@@ -176,7 +176,7 @@ export default function LoginPage() {
               type="button"
               onClick={handleSubmit}
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:bg-white hover:from-white hover:to-white hover:text-purple-700 hover:shadow-[0_0_10px_rgba(255,105,180,0.8),0_0_20px_rgba(255,105,180,0.6),0_0_30px_rgba(255,105,180,0.4)] animate-[slideInLeft_0.6s_ease-out_0.5s_both]"
+              className="w-full bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 text-white font-semibold py-3 px-15 rounded-lg transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:from-cyan-300 hover:via-blue-300 hover:to-white hover:text-blue-700 hover:shadow-[0_0_12px_rgba(0,191,255,0.9),0_0_24px_rgba(30,144,255,0.7),0_0_36px_rgba(0,102,204,0.5)] animate-[slideInLeft_0.6s_ease-out_0.5s_both]"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center">
@@ -227,7 +227,7 @@ export default function LoginPage() {
             Don't have an account?{' '}
             <a
               href="/Register"
-              className="text-purple-400 hover:text-purple-300 font-medium transition-colors"
+              className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
             >
               Sign up for free
             </a>
