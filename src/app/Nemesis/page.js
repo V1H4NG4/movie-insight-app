@@ -1,13 +1,87 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+
+// ML API base (use your env var if set; falls back to local FastAPI)
+const ML_API = process.env.NEXT_PUBLIC_ML_API_URL || 'http://127.0.0.1:8000';
 
 export default function LoadingPage() {
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('Initializing...');
   const [showMainPage, setShowMainPage] = useState(false);
+
+  const [nemesisLoading, setNemesisLoading] = useState(false);
+  const [nemesisError, setNemesisError] = useState('');
+  const [nemesisResult, setNemesisResult] = useState(null);
+
+  const handlePredictNemesis = async () => {
+    try {
+      setNemesisError('');
+      setNemesisLoading(true);
+
+      const payload = {
+        budget: Number(form.budget),   // <-- was budgetMillions
+        runtime: Number(form.runtime),
+        rating: Number(form.rating),            // % value (e.g., 85)
+        popularity: Number(form.popularity),
+        genre_1: (form.genre_1 || '').trim(),
+        genre_2: (form.genre_2 || '').trim() || '',
+      };
+
+      if (
+        Number.isNaN(payload.budget) ||
+        Number.isNaN(payload.runtime) ||
+        Number.isNaN(payload.rating) ||
+        Number.isNaN(payload.popularity) ||
+        !payload.genre_1
+      ) throw new Error('Fill budget, runtime, rating, popularity, and primary genre.');
+
+      const res = await fetch(`${ML_API}/predictNemesis`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data?.error || 'Prediction failed.');
+      setNemesisResult(data.predicted_box_office);
+    } catch (e) {
+      setNemesisError(e?.message || 'Something went wrong.');
+      setNemesisResult(null);
+    } finally {
+      setNemesisLoading(false);
+    }
+  };
+
+  {/* ------input fields-------------------------------------------------------------- */}
+  // Tweak/extend to match your dataset
+  const GENRES = [
+    'Action','Adventure','Animation','Biography','Comedy','Crime','Documentary',
+    'Drama','Family','Fantasy','History','Horror','Music','Mystery',
+    'Romance','Sci-Fi','Sport','Thriller','War','Western'
+  ];
+
+  const [form, setForm] = useState({
+    title: '',
+    year: '',
+    budget: '',
+    runtime: '',
+    popularity: '',
+    rating: '',
+    genre_1: '',
+    genre_2: '',
+  });
+
+  // simple setter factory
+  const setField = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  // optional: prevent selecting the same genre twice
+  const genre2Options = useMemo(
+    () => GENRES.filter((g) => g !== form.genre_1),
+    [form.genre_1]
+);
 
   useEffect(() => {
     const loadingSteps = [
@@ -45,7 +119,7 @@ export default function LoadingPage() {
 
   if (showMainPage) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white flex items-center justify-center p-4 relative overflow-hidden">
         <style jsx>{`
           @keyframes fadeIn {
             from {
@@ -114,30 +188,177 @@ export default function LoadingPage() {
         </div>
 
         <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
-          {/* Logo Section */}
-          <div className="mb-16">
-            <div className="relative">             
-                <Image
-                  src="/Models/nemesis.png"
-                  alt="Nemesis Model"
-                  width={750}
-                  height={163}
-                  priority
-                  className="object-contain"
-                />
+          <motion.div
+            className="mt-6"
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          >
+            {/* Logo Section */}
+            <div className="mb-16">
+              <div className="relative">             
+                  <Image
+                    src="/Models/nemesis.png"
+                    alt="Nemesis Model"
+                    width={750}
+                    height={163}
+                    priority
+                    className="object-contain"
+                  />
+              </div>
             </div>
-          </div>
+          </motion.div>
+
+          <motion.div
+            className="mt-6"
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          >
 
           {/* Main Content */}
           <div className="text-center max-w-4xl mx-auto animate-[fadeIn_1s_ease-out_0.5s_both]">
-            <h1 className="text-2xl md:text-4xl font-bold text-white mb-5 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <h1 className="text-2xl md:text-4xl font-bold text-blue-400 mb-5 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
               About Nemesis Model
             </h1>
             <div className="mb-12">
               <p className="text-xl text-gray-300 mb-6 leading-relaxed">
-                Syncdicator is a powerfull model trained to forecast insights of movies produced by DC Studios. After tracking and analysing all the movies of the new era, DCEU and the other Else World movies by the studio Syndicator is capable of predicting the Box Office hunt of the movies under trademark of DC. 
+                NEMESIS is a powerfull model trained to forecast insights of any industrial movie production. After tracking and analysing all major movies of the era, NEMESIS is capable of predicting the Box Office hunt of the movies under instantly with required inputs. 
               </p>
             </div>
+            <div className="bg-white/3 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-white/10 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Movie Name */}
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Movie Name</label>
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={setField('title')}
+                  placeholder="e.g., Guardians of the Galaxy"
+                  className="w-full rounded-xl bg-slate-800/60 border border-slate-700 px-4 py-2 text-slate-100 placeholder-slate-400"
+                />
+              </div>
+
+              {/* Year */}
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Year</label>
+                <input
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  value={form.year}
+                  onChange={setField('year')}
+                  placeholder="e.g., 2023"
+                  className="w-full rounded-xl bg-slate-800/60 border border-slate-700 px-4 py-2 text-slate-100 placeholder-slate-400"
+                />
+              </div>
+
+              {/* Budget */}
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Budget</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={form.budget}
+                  onChange={setField('budget')}
+                  placeholder="e.g., 200000000"
+                  className="w-full rounded-xl bg-slate-800/60 border border-slate-700 px-4 py-2 text-slate-100 placeholder-slate-400"
+                />
+              </div>
+
+              {/* Runtime (minutes) */}
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Runtime (min)</label>
+                <input
+                  type="number"
+                  step="1"
+                  value={form.runtime}
+                  onChange={setField('runtime')}
+                  placeholder="e.g., 148"
+                  className="w-full rounded-xl bg-slate-800/60 border border-slate-700 px-4 py-2 text-slate-100 placeholder-slate-400"
+                />
+              </div>
+
+              {/* Popularity */}
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Popularity</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={form.popularity}
+                  onChange={setField('popularity')}
+                  placeholder="e.g., 72.5"
+                  className="w-full rounded-xl bg-slate-800/60 border border-slate-700 px-4 py-2 text-slate-100 placeholder-slate-400"
+                />
+              </div>
+
+              {/* Rating (%) */}
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Rating (%)</label>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.1"
+                  value={form.rating}
+                  onChange={setField('rating')}
+                  placeholder="e.g., 86"
+                  className="w-full rounded-xl bg-slate-800/60 border border-slate-700 px-4 py-2 text-slate-100 placeholder-slate-400"
+                />
+              </div>
+
+              {/* Genre 1 */}
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Genre 1</label>
+                <select
+                  value={form.genre_1}
+                  onChange={setField('genre_1')}
+                  className="w-full rounded-xl bg-slate-800/60 border border-slate-700 px-4 py-2 text-slate-100"
+                >
+                  <option value="">Select genre…</option>
+                  {GENRES.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Genre 2 */}
+              <div>
+                <label className="block text-sm text-slate-300 mb-1">Genre 2 (optional)</label>
+                <select
+                  value={form.genre_2}
+                  onChange={setField('genre_2')}
+                  className="w-full rounded-xl bg-slate-800/60 border border-slate-700 px-4 py-2 text-slate-100"
+                >
+                  <option value="">None</option>
+                  {genre2Options.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                className='bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-400 text-white font-semibold py-3 px-15 rounded-lg transition-all duration-200 transform focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none hover:from-cyan-300 hover:via-blue-300 hover:to-white hover:text-blue-700 hover:shadow-[0_0_12px_rgba(0,191,255,0.9),0_0_24px_rgba(30,144,255,0.7),0_0_36px_rgba(0,102,204,0.5)] animate-[slideInLeft_0.6s_ease-out_0.5s_both]'
+                onClick={handlePredictNemesis}
+                disabled={nemesisLoading}
+              >
+                {nemesisLoading ? 'Predicting…' : 'Predict (Nemesis RF)'}
+              </button>
+              {/* Wherever you normally show the prediction output */}
+              {nemesisError && (
+                <div className="text-red-500 text-sm mt-2">{nemesisError}</div>
+              )}
+
+              {typeof nemesisResult === 'number' && (
+                <div className="mt-3">
+                  {/* Render exactly like your other page’s result block */}
+                  <p className="text-sm opacity-80">Predicted Box Office</p>
+                  <div className="text-2xl font-semibold">
+                    {nemesisResult.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </div>
+                </div>
+              )}
+            </div>
+
 
             {/* Call to Action 
             <div className="space-y-6">
@@ -148,13 +369,14 @@ export default function LoadingPage() {
               
             </div>*/}
           </div>
+          </motion.div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-700 via-yellow-800 to-orange-600 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-black flex items-center justify-center p-4 relative overflow-hidden">
       <style jsx>{`
         @keyframes fadeIn {
           from {

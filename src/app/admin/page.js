@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ChevronRight, Users, UserCog, Clapperboard, CalendarDays, Search, ShieldCheck, Film, Upload, CheckCircle2, XCircle, Image as ImageIcon,} from 'lucide-react';
 
 
@@ -199,6 +199,84 @@ export default function AdminPage() {
     if (activeTab === 'movies') mvLoad();
   }, [activeTab, mvLoad]);
 
+  
+  {/*------filmers load/edit-------------------------------------------------------------------------------------------------------------- */}
+  // === FILMERS: state + loader + mutator ===
+  const [flRows, setFlRows] = useState([]);
+  const [flPage, setFlPage] = useState(1);
+  const [flLimit, setFlLimit] = useState(10);
+  const [flQ, setFlQ] = useState('');
+  const [flSort, setFlSort] = useState('created_at'); // server column
+  const [flOrder, setFlOrder] = useState('desc');
+
+  const [flLoading, setFlLoading] = useState(false);
+  const [flErr, setFlErr] = useState('');
+  const [flTotal, setFlTotal] = useState(0);
+  const [flTotalPages, setFlTotalPages] = useState(1);
+
+  const flSortOptions = useMemo(
+    () => [
+      { label: 'Created (newest)', sort: 'created_at', order: 'desc' },
+      { label: 'Created (oldest)', sort: 'created_at', order: 'asc' },
+      { label: 'First name (A→Z)', sort: 'first_name', order: 'asc' },
+      { label: 'First name (Z→A)', sort: 'first_name', order: 'desc' },
+      { label: 'Last name (A→Z)',  sort: 'last_name',  order: 'asc' },
+      { label: 'Last name (Z→A)',  sort: 'last_name',  order: 'desc' },
+      { label: 'Email (A→Z)',      sort: 'email',      order: 'asc' },
+      { label: 'Email (Z→A)',      sort: 'email',      order: 'desc' },
+      { label: 'Status (A→Z)',     sort: 'status',     order: 'asc' },
+      { label: 'Status (Z→A)',     sort: 'status',     order: 'desc' },
+    ],
+    []
+  );
+
+  const flFetchFilmers = useCallback(async () => {
+    setFlLoading(true);
+    setFlErr('');
+    try {
+      const params = new URLSearchParams({
+        page: String(flPage),
+        limit: String(flLimit),
+        sort: flSort,
+        order: flOrder,
+      });
+      if (flQ.trim()) params.set('q', flQ.trim());
+
+      const res = await fetch(`/api/admin/filmers?${params.toString()}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'Failed to load filmers');
+
+      setFlRows(data.data || []);
+      setFlTotal(data.pagination?.total || 0);
+      setFlTotalPages(data.pagination?.totalPages || 1);
+    } catch (e) {
+      setFlErr(e.message || 'Error loading filmers');
+    } finally {
+      setFlLoading(false);
+    }
+  }, [flPage, flLimit, flSort, flOrder, flQ]);
+
+  useEffect(() => {
+    flFetchFilmers();
+  }, [flFetchFilmers]);
+
+  const flToggleStatus = async (row) => {
+    try {
+      const next = row.status === 'active' ? 'suspended' : 'active';
+      const res = await fetch('/api/admin/filmers', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: row.id, status: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || 'Update failed');
+
+      // Optimistic update
+      setFlRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status: next } : r)));
+    } catch (e) {
+      setFlErr(e.message || 'Error updating status');
+    }
+  };
 
 
   return (
@@ -374,28 +452,130 @@ export default function AdminPage() {
 
             {activeTab === 'filmers' && (
               <Card>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-slate-200 font-semibold">Filmers Management</h3>
-                  <span className="text-slate-400 text-sm">0 items</span>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-slate-300">
-                        <th className="py-3 px-3 border-b border-slate-800 font-medium">Name</th>
-                        <th className="py-3 px-3 border-b border-slate-800 font-medium">Company</th>
-                        <th className="py-3 px-3 border-b border-slate-800 text-right font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td colSpan={3} className="py-8 text-center text-slate-500">
-                          No filmers found.
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                {/* === FILMERS: table + controls === */}
+                <div className="p-6">
+                  {/* Controls */}
+                  <div className="flex flex-col sm:flex-row gap-3 sm:items-center mb-4">
+                    <div className="relative flex-1">
+                      <svg className="absolute left-3 top-2.5 text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 21l-4.3-4.3m-2.7 1.3a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                      <input
+                        value={flQ}
+                        onChange={(e) => { setFlPage(1); setFlQ(e.target.value); }}
+                        placeholder="Search filmers by name or email…"
+                        className="w-full pl-9 pr-3 py-2 rounded-md bg-slate-900/50 border border-slate-700 text-slate-100"
+                      />
+                    </div>
+
+                    <select
+                      value={`${flSort}:${flOrder}`}
+                      onChange={(e) => {
+                        const [s, o] = e.target.value.split(':');
+                        setFlSort(s); setFlOrder(o); setFlPage(1);
+                      }}
+                      className="px-3 py-2 rounded-md bg-slate-900/50 border border-slate-700 text-slate-100"
+                    >
+                      {flSortOptions.map(opt => (
+                        <option key={`${opt.sort}:${opt.order}`} value={`${opt.sort}:${opt.order}`}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={flLimit}
+                      onChange={(e) => { setFlLimit(Number(e.target.value)); setFlPage(1); }}
+                      className="px-3 py-2 rounded-md bg-slate-900/50 border border-slate-700 text-slate-100"
+                    >
+                      {[10, 20, 50, 100].map(n => <option key={n} value={n}>{n} / page</option>)}
+                    </select>
+                  </div>
+
+                  {/* Table */}
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/50 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-900/60 border-b border-slate-800">
+                        <tr className="text-left text-slate-300">
+                          <th className="px-4 py-3">Name</th>
+                          <th className="px-4 py-3">Email</th>
+                          <th className="px-4 py-3">Company</th>
+                          <th className="px-4 py-3">Status</th>
+                          <th className="px-4 py-3">Created</th>
+                          <th className="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800">
+                        {flLoading && (
+                          <tr>
+                            <td colSpan={6} className="px-4 py-8 text-center text-slate-400">Loading…</td>
+                          </tr>
+                        )}
+                        {!flLoading && flRows.length === 0 && (
+                          <tr>
+                            <td colSpan={6} className="px-4 py-8 text-center text-slate-400">No filmers found.</td>
+                          </tr>
+                        )}
+                        {!flLoading && flRows.map((r) => (
+                          <tr key={r.id} className="text-slate-200">
+                            <td className="px-4 py-3">
+                              <div className="font-medium">{r.firstName} {r.lastName}</div>
+                            </td>
+                            <td className="px-4 py-3">{r.email}</td>
+                            <td className="px-4 py-3">{r.company || '—'}</td>
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                r.status === 'active'
+                                  ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                                  : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                              }`}>
+                                {r.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3">{r.createdAt ? new Date(r.createdAt).toLocaleString() : '—'}</td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                onClick={() => flToggleStatus(r)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-slate-700 bg-slate-900/40 hover:bg-slate-800/60"
+                                title={r.status === 'active' ? 'Suspend' : 'Activate'}
+                              >
+                                <span className="inline-block w-4 h-4 rounded-full"
+                                  style={{ background: r.status === 'active' ? 'rgba(16,185,129,.6)' : 'rgba(245,158,11,.6)' }}
+                                />
+                                <span>{r.status === 'active' ? 'Suspend' : 'Activate'}</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Footer / Pagination */}
+                  <div className="mt-3 flex items-center justify-between text-slate-400 text-sm">
+                    <div>{flTotal} result{flTotal === 1 ? '' : 's'}</div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setFlPage((p) => Math.max(1, p - 1))}
+                        disabled={flPage <= 1}
+                        className="p-2 rounded-md border border-slate-700 hover:bg-slate-800 disabled:opacity-50"
+                        aria-label="Previous page"
+                      >‹</button>
+                      <div className="px-2">Page {flPage} / {flTotalPages}</div>
+                      <button
+                        onClick={() => setFlPage((p) => Math.min(flTotalPages, p + 1))}
+                        disabled={flPage >= flTotalPages}
+                        className="p-2 rounded-md border border-slate-700 hover:bg-slate-800 disabled:opacity-50"
+                        aria-label="Next page"
+                      >›</button>
+                    </div>
+                  </div>
+
+                  {flErr && (
+                    <div className="mt-3 rounded-md border border-red-500/30 bg-red-500/10 text-red-200 px-3 py-2">
+                      {flErr}
+                    </div>
+                  )}
                 </div>
               </Card>
             )}

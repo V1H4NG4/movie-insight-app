@@ -48,6 +48,38 @@ export default function FilmmakerDashboard() {
     }
   };
 
+  // Assistant (Marketing Predictor) state
+  const [budget, setBudget] = useState("");
+  const [boxOffice, setBoxOffice] = useState("");
+  const [genre1, setGenre1] = useState("");
+  const [genre2, setGenre2] = useState("");
+  const [marketingResult, setMarketingResult] = useState(null);
+
+  const handleMarketingPredict = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/predictMarketing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          budget: parseFloat(budget),
+          box_office: parseFloat(boxOffice),
+          genre_1: genre1,
+          genre_2: genre2 || null,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMarketingResult(data.predicted_marketing);
+      } else {
+        alert(data.detail || "Prediction failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to backend");
+    }
+  };
+
+
   const renderHomeContent = () => (
     <div className="space-y-8">
       {/* Welcome Section */}
@@ -342,54 +374,292 @@ const renderForecastorContent = () => (
   );
 
   const renderAssistantContent = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-white mb-4">AI Creative Assistant</h2>
-        <p className="text-gray-400 text-lg">Your intelligent filmmaking companion</p>
-      </div>
+  <motion.div 
+    className="p-6 max-w-4xl mx-auto"
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5 }}
+  >
+    {/* Logo Section - Place this right after the opening motion.div */}
+    <motion.div 
+      className="flex justify-center mb-1"
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
+      <motion.div
+        className="relative"
+        whileHover={{ scale: 1.05 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <Image
+          src="/Models/marketor.png"
+          alt="Marketor"
+          width={750} d
+          height={312} 
+          className="object-contain filter drop-shadow-2xl"
+          priority
+        />
+      </motion.div>
+    </motion.div>
 
-      <div className="bg-gray-900/50 backdrop-blur-sm border border-purple-500/20 rounded-xl p-6">
-        <div className="flex items-center justify-center mb-6">
-          <div className="w-24 h-24 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center animate-pulse">
-            <Brain className="w-12 h-12 text-white" />
+    {/* Header Section */}
+    <motion.div 
+      className="text-center mb-8"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1, duration: 0.4 }}
+    >
+      <div className="inline-flex items-center gap-3 mb-3">
+        <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
+          Marketing Predictor
+        </h2>
+      </div>
+      <p className="text-sm text-zinc-400 max-w-md mx-auto leading-relaxed">
+        Leverage AI to estimate optimal marketing budgets based on production details and genre analysis.
+      </p>
+    </motion.div>
+
+    {/* Input Fields */}
+    <motion.div 
+      className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.2, duration: 0.5 }}
+    >
+      {/* Budget Input */}
+      <motion.div 
+        className="group"
+        whileHover={{ scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <label className="block text-sm font-medium text-zinc-300 mb-2 group-hover:text-white transition-colors">
+          Production Budget
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-zinc-400 text-sm">$</span>
+          </div>
+          <input
+            type="number"
+            value={budget}
+            onChange={(e) => setBudget(e.target.value)}
+            placeholder="0.00"
+            className="w-full pl-8 pr-12 py-3 rounded-xl bg-zinc-900/50 border border-zinc-700 
+                     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 
+                     text-white placeholder-zinc-500 transition-all duration-200
+                     hover:border-zinc-600 backdrop-blur-sm"
+          />
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <span className="text-zinc-400 text-sm">M</span>
           </div>
         </div>
-        
-        <div className="text-center mb-8">
-          <h3 className="text-2xl font-bold text-white mb-4">How can I help you today?</h3>
-        </div>
+      </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {[
-            "Help me develop my story concept",
-            "Suggest casting ideas for my characters",
-            "Analyze my script for pacing issues",
-            "Recommend optimal shooting locations",
-            "Plan my production budget",
-            "Create a marketing strategy"
-          ].map((suggestion, index) => (
-            <button
-              key={index}
-              className="text-left p-4 bg-gray-800/50 border border-gray-600/30 rounded-lg hover:border-purple-500/50 hover:bg-gray-800/70 transition-all duration-300"
-            >
-              <p className="text-gray-300">{suggestion}</p>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex space-x-4">
+      {/* Box Office Input */}
+      <motion.div 
+        className="group"
+        whileHover={{ scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <label className="block text-sm font-medium text-zinc-300 mb-2 group-hover:text-white transition-colors">
+          Expected Box Office
+        </label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-zinc-400 text-sm">$</span>
+          </div>
           <input
-            type="text"
-            placeholder="Ask me anything about filmmaking..."
-            className="flex-1 bg-gray-800/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:border-purple-500 focus:outline-none"
+            type="number"
+            value={boxOffice}
+            onChange={(e) => setBoxOffice(e.target.value)}
+            placeholder="0.00"
+            className="w-full pl-8 pr-12 py-3 rounded-xl bg-zinc-900/50 border border-zinc-700 
+                     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 
+                     text-white placeholder-zinc-500 transition-all duration-200
+                     hover:border-zinc-600 backdrop-blur-sm"
           />
-          <button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 px-6 py-3 rounded-lg text-white font-medium transition-all duration-200">
-            <Send className="w-5 h-5" />
-          </button>
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <span className="text-zinc-400 text-sm">M</span>
+          </div>
         </div>
-      </div>
-    </div>
-  );
+      </motion.div>
+
+      {/* Primary Genre */}
+      <motion.div 
+        className="group"
+        whileHover={{ scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <label className="block text-sm font-medium text-zinc-300 mb-2 group-hover:text-white transition-colors">
+          Primary Genre
+        </label>
+        <div className="relative">
+          <select
+            value={genre1}
+            onChange={(e) => setGenre1(e.target.value)}
+            className="w-full appearance-none py-3 px-4 pr-10 rounded-xl bg-zinc-900/50 border border-zinc-700 
+                     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 
+                     text-white transition-all duration-200
+                     hover:border-zinc-600 backdrop-blur-sm cursor-pointer"
+          >
+            <option value="" className="bg-zinc-800">-- Select Primary Genre --</option>
+            <option value="Action" className="bg-zinc-800">Action</option>
+            <option value="Adventure" className="bg-zinc-800">Adventure</option>
+            <option value="Animation" className="bg-zinc-800">Animation</option>
+            <option value="Comedy" className="bg-zinc-800">Comedy</option>
+            <option value="Crime" className="bg-zinc-800">Crime</option>
+            <option value="Drama" className="bg-zinc-800">Drama</option>
+            <option value="Fantasy" className="bg-zinc-800">Fantasy</option>
+            <option value="Horror" className="bg-zinc-800">Horror</option>
+            <option value="Mystery" className="bg-zinc-800">Mystery</option>
+            <option value="Romance" className="bg-zinc-800">Romance</option>
+            <option value="Sci-Fi" className="bg-zinc-800">Sci-Fi</option>
+            <option value="Thriller" className="bg-zinc-800">Thriller</option>
+          </select>
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Secondary Genre */}
+      <motion.div 
+        className="group"
+        whileHover={{ scale: 1.02 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <label className="block text-sm font-medium text-zinc-300 mb-2 group-hover:text-white transition-colors">
+          Secondary Genre
+        </label>
+        <div className="relative">
+          <select
+            value={genre2}
+            onChange={(e) => setGenre2(e.target.value)}
+            className="w-full appearance-none py-3 px-4 pr-10 rounded-xl bg-zinc-900/50 border border-zinc-700 
+                     focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 
+                     text-white transition-all duration-200
+                     hover:border-zinc-600 backdrop-blur-sm cursor-pointer"
+          >
+            <option value="" className="bg-zinc-800">-- None --</option>
+            <option value="Action" className="bg-zinc-800">Action</option>
+            <option value="Adventure" className="bg-zinc-800">Adventure</option>
+            <option value="Animation" className="bg-zinc-800">Animation</option>
+            <option value="Comedy" className="bg-zinc-800">Comedy</option>
+            <option value="Crime" className="bg-zinc-800">Crime</option>
+            <option value="Drama" className="bg-zinc-800">Drama</option>
+            <option value="Fantasy" className="bg-zinc-800">Fantasy</option>
+            <option value="Horror" className="bg-zinc-800">Horror</option>
+            <option value="Mystery" className="bg-zinc-800">Mystery</option>
+            <option value="Romance" className="bg-zinc-800">Romance</option>
+            <option value="Sci-Fi" className="bg-zinc-800">Sci-Fi</option>
+            <option value="Thriller" className="bg-zinc-800">Thriller</option>
+          </select>
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+
+    {/* Predict Button */}
+    <motion.div 
+      className="flex justify-center mb-8"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3, duration: 0.4 }}
+    >
+      <motion.button
+        onClick={handleMarketingPredict}
+        className="group relative px-8 py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 
+                 hover:from-indigo-700 hover:to-purple-700 text-white font-medium 
+                 shadow-lg hover:shadow-xl transition-all duration-200
+                 focus:ring-2 focus:ring-indigo-500/50 focus:outline-none
+                 min-w-[200px]"
+        whileHover={{ scale: 1.05, y: -2 }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      >
+        <div className="flex items-center justify-center gap-2">
+          <svg className="w-5 h-5 group-hover:rotate-12 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span>Generate Prediction</span>
+        </div>
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 
+                      group-hover:opacity-20 transition-opacity duration-200 blur"></div>
+      </motion.button>
+    </motion.div>
+
+    {/* Result Card */}
+    {marketingResult !== null && (
+      <motion.div
+        className="relative"
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl blur-xl"></div>
+        <div className="relative p-6 rounded-2xl bg-zinc-900/80 border border-zinc-700/50 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-zinc-300 mb-1">Predicted Marketing Budget</p>
+              <div className="flex items-baseline gap-2">
+                <motion.p 
+                  className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 15 }}
+                >
+                  ${marketingResult.toFixed(2)}M
+                </motion.p>
+                <span className="text-sm text-zinc-400">USD</span>
+              </div>
+            </div>
+            <motion.div 
+              className="text-green-400"
+              initial={{ rotate: -180, opacity: 0 }}
+              animate={{ rotate: 0, opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </motion.div>
+          </div>
+          
+          {/* Additional Info */}
+          <motion.div 
+            className="mt-4 pt-4 border-t border-zinc-700/50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.3 }}
+          >
+            <div className="flex items-center justify-between text-xs text-zinc-400">
+              <span>Confidence: High</span>
+              <span>Based on genre and budget analysis</span>
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+    )}
+  </motion.div>
+);
+
 
   const renderHowToUseContent = () => (
     <div className="space-y-8">
