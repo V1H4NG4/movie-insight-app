@@ -4,6 +4,40 @@ import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import { CheckCircle, AlertTriangle, XCircle, Info } from 'lucide-react';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+// --- number helpers ---
+const toNumber = (v) => {
+  if (v == null) return 0;
+  const s = String(v).trim();
+  if (!s) return 0;
+  // allow commas, spaces, $ signs, and M suffix
+  const m = s.match(/^\s*\$?\s*([0-9.,\-]+)\s*([mM])?\s*$/);
+  if (!m) {
+    // fall back: strip non-numeric except . and -
+    const n = Number(s.replace(/[^\d.-]/g, ''));
+    return Number.isFinite(n) ? n : 0;
+  }
+  const base = Number(m[1].replace(/,/g, ''));
+  if (!Number.isFinite(base)) return 0;
+  const hasM = !!m[2];
+  return hasM ? base * 1_000_000 : base; // support "200M" → dollars
+};
+
+const toM = (dollars) => (Number.isFinite(dollars) ? dollars / 1_000_000 : 0);
+const to$ = (millions) => (Number.isFinite(millions) ? millions * 1_000_000 : 0);
 
 // ML API base (use your env var if set; falls back to local FastAPI)
 const ML_API = process.env.NEXT_PUBLIC_ML_API_URL || 'http://127.0.0.1:8000';
@@ -16,6 +50,11 @@ export default function LoadingPage() {
   const [nemesisLoading, setNemesisLoading] = useState(false);
   const [nemesisError, setNemesisError] = useState('');
   const [nemesisResult, setNemesisResult] = useState(null);
+
+  //stats
+  const maxBoxOffice = 1152;   // $1.152B
+  const minBoxOffice = 134;    // $134M
+  const averageBoxOffice = 506.25; // $506M
 
   const handlePredictNemesis = async () => {
     try {
@@ -116,6 +155,73 @@ export default function LoadingPage() {
 
     executeStep();
   }, []);
+
+  {/*-----bep functions------------------------------------------------------------------------------------------- */}
+  function BEPCard({ predictionM, budgetDollars, multiplier = 2.5 }) {
+    const budgetM = Math.max(0, budgetDollars / 1_000_000);          // $ → M
+    const bepM = Number((budgetM * multiplier).toFixed(1));
+    const diffM = Number((predictionM - bepM).toFixed(1));
+    const ratio = bepM > 0 ? predictionM / bepM : 0;
+    const roiX = budgetM > 0 ? (predictionM / budgetM) : 0;
+
+    let title = 'Failure';
+    let tone = { text: 'text-red-400', chip: 'bg-red-500/10', icon: <XCircle className="w-5 h-5" /> };
+
+    if (ratio >= 1.05) {
+      title = 'Success';
+      tone = { text: 'text-green-400', chip: 'bg-green-500/10', icon: <CheckCircle className="w-5 h-5" /> };
+    } else if (ratio >= 0.95) {
+      title = 'Near Success';
+      tone = { text: 'text-emerald-300', chip: 'bg-emerald-500/10', icon: <CheckCircle className="w-5 h-5" /> };
+    } else if (ratio >= 0.75) {
+      title = 'Near Failure';
+      tone = { text: 'text-yellow-400', chip: 'bg-yellow-500/10', icon: <AlertTriangle className="w-5 h-5" /> };
+    }
+
+    return (
+      <aside className="w-full">
+        <div className={`rounded-2xl p-6 shadow-lg border border-white/10 ${tone.chip}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <span className={`${tone.text} inline-flex items-center gap-2 text-lg font-semibold`}>
+              {tone.icon} {title}
+            </span>
+          </div>
+
+          <p className="text-gray-300 text-sm mb-4 flex items-start gap-2 leading-6">
+            <Info className="w-4 h-4 mt-0.5 shrink-0 text-gray-400" />
+            <span>Rule of thumb: Break-even ≈ <span className="font-semibold">2.5× budget</span>.</span>
+          </p>
+
+          <dl className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-gray-400">Predicted BO</dt>
+              <dd className="text-white">${predictionM.toFixed(1)}M</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-400">Budget</dt>
+              <dd className="text-white">${budgetM.toFixed(1)}M</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-400">BEP (2.5×)</dt>
+              <dd className="text-yellow-400">${bepM.toFixed(1)}M</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-400">Difference</dt>
+              <dd className={diffM >= 0 ? 'text-green-400' : 'text-red-400'}>
+                {diffM >= 0 ? '+' : '-'}${Math.abs(diffM).toFixed(1)}M
+              </dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-400">ROI Multiple</dt>
+              <dd className="text-white">{roiX.toFixed(1)}x</dd>
+            </div>
+          </dl>
+        </div>
+      </aside>
+    );
+  }
+
+  
 
   if (showMainPage) {
     return (
@@ -257,11 +363,12 @@ export default function LoadingPage() {
               <div>
                 <label className="block text-sm text-slate-300 mb-1">Budget</label>
                 <input
+                  id="budget"
                   type="number"
                   step="any"
                   value={form.budget}
                   onChange={setField('budget')}
-                  placeholder="e.g., 200000000"
+                  placeholder="e.g., 200"
                   className="w-full rounded-xl bg-slate-800/60 border border-slate-700 px-4 py-2 text-slate-100 placeholder-slate-400"
                 />
               </div>
@@ -357,6 +464,199 @@ export default function LoadingPage() {
                   </div>
                 </div>
               )}
+             {typeof nemesisResult === 'number' && !isNaN(nemesisResult) && (
+              // If parent is a grid, this ensures the charts section spans full width
+              <section className="col-span-full w-full mt-10">
+                <div className="flex flex-col md:flex-row gap-8 items-stretch">
+                  {/* LEFT: charts */}
+                  <div className="flex-1 space-y-10 min-w-0">
+                    {/* --- Market Comparison --- */}
+                    <div className="h-96">
+                      <Bar
+                        data={{
+                          labels: ['Max BO', 'Minimum BO', 'Average', 'Predicted'],
+                          datasets: [
+                            {
+                              label: 'Box Office',
+                              data: [
+                                1_152_000_000,               // Max ($)
+                                134_000_000,                 // Min ($)
+                                506_250_000,                 // Avg ($)
+                                to$(nemesisResult)           // Predicted M → $
+                              ],
+                              backgroundColor: [
+                                'rgba(59, 130, 246, 0.8)',
+                                'rgba(59, 130, 246, 0.6)',
+                                'rgba(59, 130, 246, 0.4)',
+                                'rgba(96, 165, 250, 1)'
+                              ],
+                              borderColor: [
+                                'rgba(59, 130, 246, 1)',
+                                'rgba(59, 130, 246, 0.8)',
+                                'rgba(59, 130, 246, 0.6)',
+                                'rgba(96, 165, 250, 1)'
+                              ],
+                              borderWidth: 2,
+                              borderRadius: 8,
+                              borderSkipped: false,
+                              categoryPercentage: 0.6,
+                              barPercentage: 0.8,
+                              maxBarThickness: 64
+                            }
+                          ]
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: { display: false },
+                            title: {
+                              display: true,
+                              text: 'Box Office Comparison (Domestic + Global)',
+                              color: '#FFFFFF',
+                              font: { size: 18, weight: 'bold' },
+                              padding: 20
+                            },
+                            tooltip: {
+                              backgroundColor: 'rgba(59, 130, 246, 0.95)',
+                              titleColor: '#FFFFFF',
+                              bodyColor: '#FFFFFF',
+                              borderColor: 'rgba(96, 165, 250, 1)',
+                              borderWidth: 2,
+                              cornerRadius: 8,
+                              displayColors: false,
+                              callbacks: {
+                                label: (ctx) => `$${(ctx.parsed.y / 1_000_000).toFixed(1)}M`
+                              }
+                            }
+                          },
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              ticks: {
+                                color: '#E5E7EB',
+                                font: { size: 12, weight: '500' },
+                                callback: (v) => `$${(v / 1_000_000)}M`
+                              },
+                              grid: { color: 'rgba(59,130,246,0.2)', lineWidth: 1, drawBorder: false },
+                              border: { display: false },
+                              suggestedMax: Math.max(
+                                1_000_000_000,
+                                Math.max(1_152_000_000, 506_250_000, to$(nemesisResult)) * 1.1
+                              )
+                            },
+                            x: {
+                              ticks: { color: '#FFFFFF', font: { size: 12, weight: '600' } },
+                              grid: { display: false },
+                              border: { color: 'rgba(147, 51, 234, 0.3)', width: 2 }
+                            }
+                          },
+                          interaction: { intersect: false, mode: 'index' },
+                          animation: { duration: 900, easing: 'easeOutQuart' }
+                        }}
+                      />
+                    </div>
+
+                    {/* --- Weekly Distribution --- */}
+                    <div className="h-[28rem] md:h-[22rem]">
+                      <Bar
+                        data={{
+                          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+                          datasets: [
+                            {
+                              label: 'Weekly Revenue',
+                              data: [0.40, 0.25, 0.15, 0.10, 0.06, 0.04].map(w => to$(w * nemesisResult)),
+                              backgroundColor: [
+                                'rgba(147, 197, 253, 1)',
+                                'rgba(96, 165, 250, 0.9)',
+                                'rgba(59, 130, 246, 0.7)',
+                                'rgba(37, 99, 235, 0.5)',
+                                'rgba(30, 64, 175, 0.3)',
+                                'rgba(23, 37, 84, 0.1)'
+                              ],
+                              borderColor: Array(6).fill('rgba(59, 130, 246, 1)'),
+                              borderWidth: 2,
+                              borderRadius: 12,
+                              borderSkipped: false,
+                              categoryPercentage: 0.6,
+                              barPercentage: 0.8,
+                              maxBarThickness: 56
+                            }
+                          ]
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          layout: { padding: { top: 8, right: 8, bottom: 8, left: 8 } },
+                          plugins: {
+                            title: {
+                              display: true,
+                              text: 'Weekly Box Office Distribution (Domestic + Global)',
+                              color: '#FFFFFF',
+                              font: { size: 18, weight: 'bold' },
+                              padding: { top: 10, bottom: 14 }
+                            },
+                            legend: { display: false },
+                            tooltip: {
+                              backgroundColor: 'rgba(59, 130, 246, 0.95)',
+                              titleColor: '#FFFFFF',
+                              bodyColor: '#FFFFFF',
+                              borderColor: 'rgba(96, 165, 250, 1)',
+                              borderWidth: 2,
+                              cornerRadius: 8,
+                              displayColors: false,
+                              callbacks: {
+                                label: (ctx) => `$${(ctx.parsed.y / 1_000_000).toFixed(1)}M`
+                              }
+                            }
+                          },
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              ticks: {
+                                color: '#E5E7EB',
+                                font: { size: 12, weight: '500' },
+                                callback: (v) => `$${(v / 1_000_000).toFixed(0)}M`
+                              },
+                              grid: { color: 'rgba(147, 51, 234, 0.2)', lineWidth: 1, drawBorder: false },
+                              border: { display: false }
+                            },
+                            x: {
+                              ticks: {
+                                color: '#FFFFFF',
+                                font: { size: 12, weight: '600' },
+                                autoSkip: true,
+                                maxRotation: 0,
+                                minRotation: 0
+                              },
+                              grid: { display: false },
+                              border: { color: 'rgba(147, 51, 234, 0.3)', width: 2 }
+                            }
+                          },
+                          interaction: { intersect: false, mode: 'index' },
+                          animation: {
+                            duration: 900,
+                            easing: 'easeOutQuart',
+                            delay: (ctx) => ctx.dataIndex * 80
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* RIGHT: fixed rail with BEP */}
+                  <div className="w-full md:w-[360px] shrink-0">
+                    <BEPCard
+                      predictionM={Number(nemesisResult)}                                  // MILLIONS
+                      budgetDollars={Number(document.getElementById('budget')?.value) * 1_000_000} // <-- MILLIONS → DOLLARS
+                      multiplier={2.5}
+                    />
+                  </div>
+                </div>
+              </section>
+            )}
+
+
             </div>
 
 

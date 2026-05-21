@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Film, Camera, Code, Sparkles, Play, Clapperboard, Popcorn } from 'lucide-react';
 import Link from 'next/link';
+import Image from "next/image";
 
 export default function WelcomePage() {
   const [showWelcome, setShowWelcome] = useState(true);
@@ -17,7 +18,7 @@ export default function WelcomePage() {
       setTimeout(() => {
         setShowQuestion(true);
       }, 500);
-    }, 3000);
+    }, 4000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -193,36 +194,36 @@ export default function WelcomePage() {
         {/* Welcome Message */}
         {showWelcome && (
           <div className={`text-center ${showWelcome ? 'animate-[fadeIn_1s_ease-out]' : 'animate-[fadeOut_0.5s_ease-out]'}`}>
-            <div className="flex items-center justify-center mb-8 animate-[float_3s_ease-in-out_infinite]">
-              <div className="relative">
-                <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 rounded-3xl animate-[pulse_2s_ease-in-out_infinite] shadow-[0_0_40px_rgba(147,51,234,0.6)]">
-                  <Film className="w-16 h-16 text-white" />
-                </div>
-                <div className="absolute -top-2 -right-2">
-                  <Sparkles className="w-7 h-7 text-yellow-400 animate-spin" />
-                </div>
-              </div>
-            </div>
-            
             <div className="mb-8">
-              <h1 className="text-5xl font-bold text-white mb-4 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-[float_4s_ease-in-out_infinite]">
-                Welcome to
+              <h1 className="text-4xl font-bold text-white mb-4 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-[float_4s_ease-in-out_infinite]">
+                WELCOME TO
               </h1>
               <div className="relative">
-                <h2 className="text-9xl text-white mb-8 tracking-wider font-mono"> 
+                <div className="flex items-center justify-center">
+                  <Image
+                    src="/Images/reelevo.png"
+                    alt="REELEVO logo"
+                    width={3000}
+                    height={1250}
+                    priority
+                    className="h-84 w-auto object-contain"
+                  />
+                  <div className="absolute -top-1 -right-1">
+                    <Sparkles className="w-10 h-10 text-yellow-400 animate-spin" />
+                  </div>
+                </div>
+                {/*<h2 className="text-9xl text-white mb-8 tracking-wider font-mono"> 
                     REELEVO
                   <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent opacity-80"></div>
-                </h2>
-                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-[pulse_2s_ease-in-out_infinite]"></div>
+                </h2>*/}
               </div>
             </div>
             
-            <div className="flex items-center justify-center space-x-3 mb-4">
+            <div className="flex items-center justify-center space-x-3 mb-8">
               <div className="w-4 h-4 bg-purple-500 rounded-full animate-bounce"></div>
-              <div className="w-4 h-4 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-4 h-4 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
               <div className="w-4 h-4 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
             </div>
-            <p className="text-gray-300 text-lg font-medium">Your journey through the depths of Cinema begins here.</p>
           </div>
         )}
 
@@ -246,39 +247,41 @@ export default function WelcomePage() {
             {/* Movie Ticket Options */}
             <div className="relative max-w-4xl mx-auto">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 px-8">
-                {/* Filmmaker Ticket */}
-                <button
-                  onClick={() => handleOptionSelect('Im a filmmaker')}
-                  className={`group relative ticket-shape h-40 transition-all duration-500 transform hover:scale-105 hover:shadow-[0_0_40px_rgba(147,51,234,0.8)] focus:outline-none focus:ring-4 focus:ring-purple-500/50 ${
-                    selectedOption === 'Im a filmmaker' ? 'scale-105 shadow-[0_0_40px_rgba(147,51,234,0.8)]' : ''
-                  }`}
-                >
-                  <div className="ticket-stub"></div>
-                  <div className="relative z-10 h-full flex items-center justify-center px-8">
-                    <div className="flex items-center space-x-6">
-                      <div className="relative flex-shrink-0">
-                        <div className="bg-white/20 p-4 rounded-xl group-hover:bg-white/30 transition-all duration-300">
-                          <Clapperboard className="w-10 h-10 text-white" />
+                <Link href="/Register" passHref className="block w-full">
+                  {/* Filmmaker Ticket */}
+                  <button
+                    onClick={() => handleOptionSelect('You will be registered as a Filmmaker')}
+                    className={`w-full group relative ticket-shape h-40 transition-all duration-500 transform hover:scale-105 hover:shadow-[0_0_40px_rgba(147,51,234,0.8)] focus:outline-none focus:ring-4 focus:ring-purple-500/50 ${
+                      selectedOption === 'You will be registered as a Filmmaker' ? 'scale-105 shadow-[0_0_40px_rgba(147,51,234,0.8)]' : ''
+                    }`}
+                  >
+                    <div className="ticket-stub"></div>
+                    <div className="relative z-10 h-full flex items-center justify-center px-8">
+                      <div className="flex items-center space-x-6">
+                        <div className="relative flex-shrink-0">
+                          <div className="bg-white/20 p-4 rounded-xl group-hover:bg-white/30 transition-all duration-300">
+                            <Clapperboard className="w-10 h-10 text-white" />
+                          </div>
+                          <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-ping"></div>
                         </div>
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-ping"></div>
-                      </div>
-                      <div className="text-left">
-                        <h3 className="text-2xl font-bold mb-1 tracking-wide text-white">I'm a Filmer</h3>
-                        <p className="text-purple-100 text-sm leading-relaxed">
-                          Get analics and insights.
-                        </p>
+                        <div className="text-left">
+                          <h3 className="text-2xl font-bold mb-1 tracking-wide text-white">I'm a Filmer</h3>
+                          <p className="text-purple-100 text-sm leading-relaxed">
+                            Get analics and insights.
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  {/* Ticket number on the right */}
-                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-center">
-                    <div className="text-white text-xs font-mono mb-1 transform -rotate-90">ADMIT ONE</div>
-                  </div>
-                </button>
+                    
+                    {/* Ticket number on the right */}
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-center">
+                      <div className="text-white text-xs font-mono mb-1 transform -rotate-90">ADMIT ONE</div>
+                    </div>
+                  </button>
+                </Link>
 
                 {/* Geek Ticket */}
-                <Link href="/Login" passHref className="block w-full">
+                <Link href="/RegUser" passHref className="block w-full">
                   <button className={`w-full group relative ticket-shape h-40 transition-all duration-500 transform hover:scale-105 hover:shadow-[0_0_40px_rgba(147,51,234,0.8)] focus:outline-none focus:ring-4 focus:ring-purple-500/50 ${
                   selectedOption === 'Im a filmmaker' ? 'scale-105 shadow-[0_0_40px_rgba(147,51,234,0.8)]' : ''
                   }`}>

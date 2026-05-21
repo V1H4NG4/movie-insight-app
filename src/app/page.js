@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Play, TrendingUp, DollarSign, BarChart3, Star, Zap, Film, Clapperboard, Target, Info, Mail, MessageCircle, Phone, MapPin, MessageSquare, CheckCircle, Users, Heart, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState, useEffect, useCallback, chipClass } from 'react'
+import { Play, TrendingUp, DollarSign, BarChart3, Star, Zap, Film, Ticket, Target, Info, Mail, MessageCircle, Phone, MapPin, MessageSquare, CheckCircle, Users, Heart, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link';
+import Image from "next/image";
 
 export default function RenderHome() {
   const [darkMode, setDarkMode] = useState(true)
@@ -62,6 +63,58 @@ export default function RenderHome() {
       answer: "Our recommendation engine uses advanced algorithms that analyze your viewing patterns, ratings, and preferences. The more you use the platform, the more accurate and personalized your recommendations become."
     }
   ];
+
+
+  {/* ----------------movie fetch -----------------------------------------------------------*/}
+  // ===== Movies panel state (inline) =====
+  const [mvItems, setMvItems] = useState([]);
+  const [mvQ, setMvQ] = useState('');
+  const [mvLoading, setMvLoading] = useState(false);
+  const [mvErr, setMvErr] = useState('');
+
+  // Optional labels for chips
+  const MV_TYPE_LABELS = {
+    '2D': '2D only',
+    '3D': '3D',
+    'IMAX': 'IMAX',
+    'DOLBY_ATMOS': 'Dolby Atmos',
+    'DOLBY_DIGITAL': 'Dolby Digital',
+    '4DX': '4DX',
+  };
+
+  // --- Chip styles (optional) ---
+  const MV_TYPE_STYLES = {
+    'IMAX': 'border-indigo-400/50 bg-indigo-400/10 text-indigo-200',
+    '4DX': 'border-rose-400/50 bg-rose-400/10 text-rose-200',
+    '3D': 'border-cyan-400/50 bg-cyan-400/10 text-cyan-200',
+    '2D': 'border-zinc-600/60 bg-zinc-700/20 text-zinc-200',
+    'DOLBY_ATMOS': 'border-fuchsia-400/50 bg-fuchsia-400/10 text-fuchsia-200',
+    'DOLBY_DIGITAL': 'border-emerald-400/50 bg-emerald-400/10 text-emerald-200',
+  };
+
+  const mvLoad = useCallback(async () => {
+    setMvLoading(true);
+    setMvErr('');
+    try {
+      const qs = mvQ.trim() ? `?q=${encodeURIComponent(mvQ.trim())}` : '';
+      const res = await fetch(`/api/movies/list${qs}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+      setMvItems(Array.isArray(data.items) ? data.items : []);
+    } catch (e) {
+      setMvErr(e.message || 'Failed to load');
+      setMvItems([]);
+    } finally {
+      setMvLoading(false);
+    }
+  }, [mvQ]);
+
+  // Auto-load when the home page mounts
+  useEffect(() => {
+    mvLoad();
+  }, [mvLoad]);
+  {/*---------------- movie fetch end-------------------------------------------------------------------- */}
+
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -127,13 +180,17 @@ export default function RenderHome() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-                <button className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-2xl font-semibold text-lg hover:shadow-2xl hover:bg-purple-600 shadow-purple-500/25 transform transition-all duration-300 flex items-center">
-                  <Play className="w-5 h-5 mr-2 group-hover:bg-purple-600 transition-transform duration-200" />
-                  Start now
-                </button>
-                <button className="px-8 py-4 border-2 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 rounded-2xl font-semibold text-lg hover:bg-purple-600 dark:hover:bg-purple-900/30 transition-all duration-200">
-                  Join Community
-                </button>
+                <Link href="/AccountType">
+                  <button className="group px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-2xl font-semibold text-lg hover:shadow-2xl hover:bg-orange-600 shadow-orange-500/25 transform transition-all duration-300 flex items-center">
+                    <Play className="w-5 h-5 mr-2 group-hover:transition-transform duration-200 rotate-360" />
+                    Start now
+                  </button>
+                </Link>
+                <Link href="/RegUser">
+                  <button className="px-8 py-4 border-2 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 rounded-2xl font-semibold text-lg hover:bg-purple-600 dark:hover:bg-purple-900/30 transition-all duration-200">
+                    Join Community
+                  </button>
+                </Link>
               </div>
 
               {/* Slide indicators */}
@@ -233,8 +290,7 @@ export default function RenderHome() {
             <p className="text-xl mb-12 opacity-90">
               Join the best didgtal experts with AI-driven decision making
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">              
               <Link href="/Register">
                 <button className="px-10 py-4 bg-white text-purple-600 rounded-2xl font-bold text-lg hover:bg-gray-100 transform hover:scale-105 transition-all duration-200 shadow-xl">
                   JOIN AS FILMER
@@ -250,6 +306,130 @@ export default function RenderHome() {
           <div className="absolute top-20 left-20 w-32 h-32 border-4 border-white/20 rounded-full animate-spin animation-duration-20000"></div>
           <div className="absolute bottom-20 right-20 w-24 h-24 border-4 border-yellow-400/30 rounded-full animate-spin animation-duration-15000"></div>
         </section>
+
+        {/* Movie list */}
+        <section className="mt-16">
+          {/* Header + actions */}
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="ml-8 text-4xl md:text-3xl font-semibold">Hitting Theatres this month</h1>
+              <h2 className="ml-8 text-2xl mt-1">
+                <span className="block text-transparent bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text">Latest Hollywood collection...</span>
+              </h2>
+            </div>
+
+            {/* Search / refresh */}
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <input
+                  value={mvQ}
+                  onChange={(e) => setMvQ(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && mvLoad()}
+                  placeholder="Search by title…"
+                  className="w-56 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-sm outline-none ring-0 focus:border-zinc-600"
+                />
+                <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-zinc-500">
+                  ⏎
+                </span>
+              </div>
+              <button
+                onClick={mvLoad}
+                className="rounded-xl border border-zinc-700 bg-zinc-800/60 px-3 py-2 mr-8 text-sm hover:bg-zinc-800 active:scale-[0.98] transition"
+                aria-label="Reload movies"
+              >
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          {/* Loading */}
+          {mvLoading && (
+            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={`sk-${i}`}
+                  className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50"
+                >
+                  <div className="aspect-[2/3] animate-pulse bg-zinc-800/70" />
+                  <div className="p-4 space-y-2">
+                    <div className="h-4 w-3/4 animate-pulse bg-zinc-800 rounded" />
+                    <div className="h-3 w-1/3 animate-pulse bg-zinc-800 rounded" />
+                    <div className="flex gap-2 pt-2">
+                      <div className="h-5 w-12 animate-pulse bg-zinc-800 rounded-full" />
+                      <div className="h-5 w-16 animate-pulse bg-zinc-800 rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Error */}
+          {!mvLoading && mvErr && (
+            <div className="rounded-xl border border-red-800/60 bg-red-900/20 p-6">
+              <p className="text-sm text-red-300">Error: {mvErr}</p>
+            </div>
+          )}
+
+          {/* Empty */}
+          {!mvLoading && !mvErr && mvItems.length === 0 && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+              <p className="text-sm text-zinc-300">No movies found.</p>
+            </div>
+          )}
+
+          {/* Grid */}
+          {!mvLoading && !mvErr && mvItems.length > 0 && (
+            <div className="ml-8 grid gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {mvItems.map((mv) => (
+                <article
+                  key={mv.id}
+                  className="group relative overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 transition-colors"
+                >
+                  {/* Poster */}
+                  <div className="aspect-[2/3] w-full overflow-hidden bg-zinc-800">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={mv.poster_path}
+                      alt={mv.title}
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      loading="lazy"
+                    />
+                    {/* gradient overlay on hover */}
+                    <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4">
+                    <h3 className="font-medium leading-tight line-clamp-2">{mv.title}</h3>
+                    <p className="mt-1 text-xs text-zinc-400">
+                      {mv.release_date}
+                    </p>
+
+                    {Array.isArray(mv.release_types) && mv.release_types.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {mv.release_types.map((t, i) => (
+                          <span key={`${mv.id}-tag-${i}`} className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide ${MV_TYPE_STYLES?.[t] || 'border-zinc-700 text-zinc-300'}`}
+>
+                            {MV_TYPE_LABELS?.[t] || t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* subtle top-left badge on hover */}
+                  <div className="pointer-events-none absolute left-2 top-2 translate-y-[-8px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
+                    <span className="rounded-md bg-black/60 px-2 py-0.5 text-[10px] text-zinc-200">
+                      Movie
+                    </span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+      </section>
+
 
         {/* Footer */}
         <footer className="relative z-10 px-6 py-12 bg-gray-50 dark:bg-gray-900 border-t border-purple-100 dark:border-purple-900">
@@ -459,12 +639,22 @@ export default function RenderHome() {
       <nav className="fixed top-0 inset-x-0 z-50 px-6 py-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-purple-100 dark:border-purple-900">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 flex items-center justify-center transform hover:scale-110 transition-transform duration-200">
-              <Clapperboard className="w-10 h-10 text-white" />
+            <div className="w-10 h-10 flex items-center justify-center">
+              <Ticket className="w-14 h-9 text-gradient-to-r from-yellow-400 to-orange-500 transform rotate-35" />
             </div>
-            <span className="text-2xl font-bold text-blue-400 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+            <div className="ml-0 h-10 flex items-center">
+              <Image
+                src="/Images/reelevo.png"           // put your 3000x1250 file in /public/logo.png
+                alt="REELEVO"
+                width={3000}
+                height={1250}
+                priority
+                className="h-8 md:h-10 w-auto object-contain"
+              />
+            </div>
+            {/*<span className="text-2xl font-bold text-blue-400 bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
               REELEVO
-            </span>
+            </span>*/}
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
@@ -484,9 +674,11 @@ export default function RenderHome() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-purple-500/25 transform hover:scale-105 transition-all duration-200">
-              Get Started
-            </button>
+            <Link href="/Login">
+              <button className="px-6 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-purple-500/25 transform">
+                Sign in
+              </button>
+            </Link>
           </div>
         </div>
       </nav>

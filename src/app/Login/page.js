@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Eye, EyeOff, Film, Mail, Lock, TrendingUp } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -11,6 +12,61 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  {/* ----login starts------------------------------------------------------------------------------------------------------------ */}
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [apiError, setApiError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+
+  // prefer next/navigation:
+  //// 
+  //// const router = useRouter();
+
+  async function handleLogin() {
+    setApiError('');
+    setSuccessMsg('');
+
+    const email = (formData.email || '').trim().toLowerCase();
+    const password = formData.password || '';
+
+    const emailOk = /^\S+@\S+\.\S+$/.test(email);
+    const pwOk = password.length > 0;
+    if (!emailOk || !pwOk) {
+      setApiError('Enter a valid email and password.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data?.success) {
+        setApiError(data?.message || 'Login failed.');
+        return;
+      }
+
+      // Redirect by role
+      if (data.role === 'filmer') {
+        window.location.href = '/filmerAccount';
+      } else if (data.role === 'geek') {
+        window.location.href = '/usernew';
+      } else {
+        setApiError('Unknown role. Please contact support.');
+      }
+    } catch (e) {
+      console.error('Login error', e);
+      setApiError('Network error. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -19,15 +75,48 @@ export default function LoginPage() {
     }));
   };
 
-  const handleSubmit = async () => {
+  async function handleSubmit() {
+    try { setApiError && setApiError(''); } catch {}
+    try { setSuccessMsg && setSuccessMsg(''); } catch {}
+
+    const email = (formData.email || '').trim().toLowerCase();
+    const password = formData.password || '';
+
+    const emailOk = /^\S+@\S+\.\S+$/.test(email);
+    const pwOk = password.length > 0;
+    if (!emailOk || !pwOk) {
+      try { setApiError && setApiError('Enter a valid email and password.'); } catch {}
+      return;
+    }
+
     setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data?.success) {
+        try { setApiError && setApiError(data?.message || 'Login failed.'); } catch {}
+        return;
+      }
+
+      if (data.role === 'filmer') {
+        window.location.href = '/FilmerAccount';
+      } else if (data.role === 'geek') {
+        window.location.href = '/usernew';
+      } else {
+        try { setApiError && setApiError('Unknown role. Please contact support.'); } catch {}
+      }
+    } catch (e) {
+      console.error('handleSubmit login error', e);
+      try { setApiError && setApiError('Network error. Please try again.'); } catch {}
+    } finally {
       setIsLoading(false);
-      alert('Login functionality would be implemented here');
-    }, 1500);
-  };
+    }
+  }
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -96,7 +185,7 @@ export default function LoginPage() {
             </div>
             <TrendingUp className="w-6 h-6 text-purple-400 ml-2" />
           </div>*/}
-          <h1 className="text-3xl font-bold text-white mb-2">REELEVO</h1>
+          <h1 className="text-3xl font-bold block text-transparent bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text mb-2">REELEVO</h1>
           <p className="text-gray-300">Sign in to your Reelevo account</p>
         </div>
 
@@ -188,6 +277,19 @@ export default function LoginPage() {
               )}
             </button>
           </div>
+          <div aria-live="polite" className="mt-4 space-y-3">
+            {apiError ? (
+              <div className="rounded-lg border border-red-500/30 bg-red-500/10 text-red-200 text-sm p-3">
+                {apiError}
+              </div>
+            ) : null}
+
+            {successMsg ? (
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 text-sm p-3">
+                {successMsg}
+              </div>
+            ) : null}
+          </div>
 
           {/* Divider */}
           <div className="mt-6 mb-6 animate-[slideInLeft_0.6s_ease-out_0.6s_both]">
@@ -227,7 +329,7 @@ export default function LoginPage() {
             Don't have an account?{' '}
             <a
               href="/Register"
-              className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              className="text-transparent bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text hover:text-blue-300 font-medium transition-colors"
             >
               Sign up for free
             </a>

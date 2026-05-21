@@ -193,7 +193,7 @@ export default function SignUpPage() {
       <div className="relative w-full max-w-md">
         {/* Logo and Header */}
         <div className="text-center mb-8 animate-[fadeInDown_0.8s_ease-out]">
-          <h1 className="text-3xl font-bold text-white mb-2">Join REELEVO</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Join <span className='text-transparent bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text'>REELEVO</span></h1>
           <p className="text-gray-300">
             {getStepTitle()}
           </p>

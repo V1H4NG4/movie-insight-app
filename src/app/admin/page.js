@@ -8,6 +8,8 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('admins');
   const [query, setQuery] = useState('');
 
+  const geeksAdmin = useAdminGeeks();
+    useEffect(() => { geeksAdmin.fetchGeeks({ page: 1 }); }, []); // initial load
 
 
   {/*----------------admin data loading block-----------------------------------------------------------------------------------------------*/}
@@ -260,6 +262,64 @@ export default function AdminPage() {
     flFetchFilmers();
   }, [flFetchFilmers]);
 
+  {/*---------geeks------------------------------------------------------------------------------------------------------------------------*/}
+  function useAdminGeeks() {
+    const { useState, useCallback } = require('react');
+
+    const [items, setItems] = useState([]);
+    const [q, setQ] = useState('');
+    const [status, setStatus] = useState('');
+    const [page, setPage] = useState(1);
+    const [limit] = useState(20);
+    const [total, setTotal] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [err, setErr] = useState('');
+
+    const fetchGeeks = useCallback(async (opts = {}) => {
+      setLoading(true); setErr('');
+      try {
+        const u = new URL('/api/admin/geeks', window.location.origin);
+        u.searchParams.set('page', String(opts.page ?? page));
+        u.searchParams.set('limit', String(opts.limit ?? limit));
+        const _q = opts.q ?? q; if (_q) u.searchParams.set('q', _q.trim());
+        const _s = opts.status ?? status; if (_s) u.searchParams.set('status', _s);
+
+        const res = await fetch(u.toString(), { credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data?.message || 'Load failed');
+        setItems(Array.isArray(data.items) ? data.items : []);
+        setTotal(data.total || 0);
+        setPage(data.page || 1);
+      } catch (e) {
+        setErr(e.message || 'Load failed');
+        setItems([]); setTotal(0);
+      } finally {
+        setLoading(false);
+      }
+    }, [page, limit, q, status]);
+
+    const toggleStatus = useCallback(async (id, next) => {
+      const prev = items;
+      setItems(xs => xs.map(x => x.id === id ? { ...x, status: next } : x));
+      try {
+        const res = await fetch('/api/admin/geeks', {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status: next }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data?.message || 'Toggle failed');
+      } catch (e) {
+        setItems(prev); // revert on error
+        throw e;
+      }
+    }, [items]);
+
+    return { items, q, setQ, status, setStatus, page, setPage, limit, total, loading, err, fetchGeeks, toggleStatus };
+  }
+  {/*---------geeks ends------------------------------------------------------------------------------------------------------------------------*/}
+
   const flToggleStatus = async (row) => {
     try {
       const next = row.status === 'active' ? 'suspended' : 'active';
@@ -422,33 +482,76 @@ export default function AdminPage() {
             )}
 
             {activeTab === 'geeks' && (
-              <Card>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-slate-200 font-semibold">Geeks Management</h3>
-                  <span className="text-slate-400 text-sm">0 items</span>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-slate-300">
-                        <th className="py-3 px-3 border-b border-slate-800 font-medium">Username</th>
-                        <th className="py-3 px-3 border-b border-slate-800 font-medium">Email</th>
-                        <th className="py-3 px-3 border-b border-slate-800 font-medium">Level</th>
-                        <th className="py-3 px-3 border-b border-slate-800 text-right font-medium">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td colSpan={4} className="py-8 text-center text-slate-500">
-                          No geeks found.
+            <section className="space-y-4">
+              <h2 className="text-lg font-semibold">Geeks</h2>
+
+              <div className="flex gap-2">
+                <input
+                  value={geeksAdmin.q}
+                  onChange={(e) => geeksAdmin.setQ(e.target.value)}
+                  placeholder="Search name/email/phone"
+                  className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2"
+                />
+                <select
+                  value={geeksAdmin.status}
+                  onChange={(e) => geeksAdmin.setStatus(e.target.value)}
+                  className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2"
+                >
+                  <option value="">All</option>
+                  <option value="active">Active</option>
+                  <option value="suspend">Suspend</option>
+                </select>
+                <button
+                  onClick={() => geeksAdmin.fetchGeeks({ page: 1, q: geeksAdmin.q, status: geeksAdmin.status })}
+                  className="px-3 py-2 rounded-xl border border-zinc-700 hover:bg-zinc-800"
+                >
+                  Filter
+                </button>
+              </div>
+
+              {geeksAdmin.loading && <div className="text-sm text-zinc-400">Loading…</div>}
+              {geeksAdmin.err && <div className="text-sm text-rose-400">{geeksAdmin.err}</div>}
+
+              <div className="overflow-x-auto border border-zinc-800 rounded-xl">
+                <table className="w-full text-sm">
+                  <thead className="bg-zinc-900/50">
+                    <tr>
+                      <th className="text-left p-2">Name</th>
+                      <th className="text-left p-2">Email</th>
+                      <th className="text-left p-2">Phone</th>
+                      <th className="text-left p-2">Status</th>
+                      <th className="text-right p-2">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {geeksAdmin.items.map(g => (
+                      <tr key={g.id} className="border-t border-zinc-800">
+                        <td className="p-2">{g.firstname} {g.lastname}</td>
+                        <td className="p-2">{g.email}</td>
+                        <td className="p-2">{g.phone || '—'}</td>
+                        <td className="p-2">{g.status}</td>
+                        <td className="p-2 text-right">
+                          <button
+                            onClick={async () => {
+                              const next = g.status === 'active' ? 'suspend' : 'active';
+                              try { await geeksAdmin.toggleStatus(g.id, next); } catch (e) { alert(e.message); }
+                            }}
+                            className="px-3 py-1.5 rounded-lg border border-zinc-700 hover:bg-zinc-800 text-xs"
+                          >
+                            {g.status === 'active' ? 'Suspend' : 'Activate'}
+                          </button>
                         </td>
                       </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </Card>
-            )}
+                    ))}
+                    {!geeksAdmin.loading && geeksAdmin.items.length === 0 && (
+                      <tr><td className="p-3 text-center text-zinc-400" colSpan={5}>No results</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
 
             {activeTab === 'filmers' && (
               <Card>
